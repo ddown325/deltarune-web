@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <body oncontextmenu="return false;">
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>DELTARUNE</title>
+    <meta name="title" content="DELTARUNE" />
+    <meta name="description" content="Unofficial Deltarune WebPort" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <base href="https://ddown325.github.io/deltarune-web/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DELTARUNE" />
+    <meta property="og:description" content="Unofficial Deltarune WebPort" />
+    <meta property="og:image" content="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1671210/library_hero.jpg" />
+
+    <style>@-webkit-keyframes rotation {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+
+    to {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@-moz-keyframes rotation {
+    from {
+        -moz-transform: rotate(0deg);
+    }
+
+    to {
+        -moz-transform: rotate(360deg);
+    }
+}
+
+@-o-keyframes rotation {
+    from {
+        -o-transform: rotate(0deg);
+    }
+
+    to {
+        -o-transform: rotate(360deg);
+    }
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: black;
+    font-family: "Lucida Console", Monaco, monospace;
+
+    color: white;
+
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas.emscripten {
+    display: block;
+    background-color: black;
+    position: absolute;
+    transition: opacity 0s ease-in;
+    -webkit-transition: opacity 0s ease-in;
+    opacity: 0;
+    filter: blur(0) grayscale(0);
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -o-crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    margin: auto;
+}
+
+canvas.active {
+    animation-name: fadeIn;
+    animation-duration: 0s;
+    opacity: 1;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes blur {
+    0% {
+        filter: blur(0) grayscale(0);
+    }
+
+    100% {
+        filter: blur(2px) grayscale(1);
+    }
+}
+
+.spinner {
+    height: 30px;
+    width: 30px;
+    -webkit-animation: rotation 0.8s linear infinite;
+    -moz-animation: rotation 0.8s linear infinite;
+    -o-animation: rotation 0.8s linear infinite;
+    animation: rotation 0.8s linear infinite;
+    border: 5px solid #bdff00;
+    border-top: 5px solid #719900;
+    border-radius: 100%;
+}
+
+#status {
+    display: inline-block;
+    vertical-align: top;
+    font-weight: bold;
+    color: white;
+}
+
+#progress {
+    width: 250px;
+    height: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 5px;
+}
+
+progress[value]::-webkit-progress-bar {
+    background-color: #8492a6;
+    height: 10px;
+    border-radius: 15px;
+}
+
+progress[value]::-webkit-progress-value {
+    background-image: -webkit-linear-gradient(left, #719900, #bdff00);
+    height: 10px;
+    border-radius: 15px;
+}
+
+.output-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    transform: translateY(100%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.output-container.visible {
+    transform: translateY(0);
+}
+
+.output-button {
+    margin: 5px;
+    padding: 8px 15px;
+    width: auto;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: black;
+    color: white;
+    outline-color: #20c20e;
+    outline-style: dashed;
+    font-family: "Lucida Console", Monaco, monospace;
+}
+
+#output {
+    display: none;
+    height: 200px;
+    background-color: black;
+    color: white;
+    font-family: "Lucida Console", Monaco, monospace;
+    outline: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+}
+
+#message-container {
+    display: none;
+    min-height: 50px;
+    background-color: rgba(20, 20, 20, 0.5);
+    outline: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+    position: absolute;
+    top: 0;
+}
+
+#messages {
+    margin-left: 50px;
+    color: white;
+    font-family: "Lucida Console", Monaco, monospace;
+    outline: none;
+    border: none;
+    padding: 0;
+}
+
+#closeUIButton {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+    display: none;
+    font-size: 35px;
+}
+
+.hidden-ui {
+    display: none !important;
+}
+
+.save-manager-modal {
+    display: none;
+
+    position: fixed;
+
+    z-index: 1001;
+
+    left: 0;
+    top: 0;
+    width: 100%;
+
+    height: 100%;
+
+    overflow: auto;
+
+    background-color: rgba(0, 0, 0, 0.8);
+
+    justify-content: center;
+    align-items: center;
+}
+
+.save-manager-content {
+    background-color: #1a1a1a;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+
+    max-width: 800px;
+
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: white;
+    text-decoration: none;
+}
+
+.minimize-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 11px;
+    right: 46px;
+    cursor: pointer;
+}
+
+.minimize-button:hover,
+.minimize-button:focus {
+    color: white;
+    text-decoration: none;
+}
+
+.save-file-list {
+    max-height: 400px;
+
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #0d0d0d;
+}
+
+.save-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #222;
+}
+
+.save-file-item:last-child {
+    border-bottom: none;
+}
+
+.save-file-info {
+    flex-grow: 1;
+}
+
+.save-file-info span {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.save-file-actions button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #20c20e;
+    color: black;
+    font-weight: bold;
+}
+
+.save-file-actions button.delete-btn {
+    background-color: #FA1E4E;
+}
+
+.file-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #333;
+}
+
+.file-upload-section input[type="file"] {
+    background-color: #0d0d0d;
+    border: 1px solid #333;
+    padding: 8px;
+    border-radius: 5px;
+    color: white;
+}
+
+.file-upload-section input[type="text"] {
+    background-color: #0d0d0d;
+    border: 1px solid #333;
+    padding: 8px;
+    border-radius: 5px;
+    color: white;
+}
+
+.file-upload-section button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.custom-message-box {
+    display: none;
+
+    position: fixed;
+
+    z-index: 1002;
+
+    left: 0;
+    top: 0;
+    width: 100%;
+
+    height: 100%;
+
+    overflow: auto;
+
+    background-color: rgba(0, 0, 0, 0.6);
+
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-message-box-content {
+    background-color: #1a1a1a;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+
+    max-width: 400px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.custom-message-box-content button {
+    background-color: #20c20e;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+#mobile-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+
+    pointer-events: none;
+    z-index: 100;
+}
+
+#joystick-zone {
+    position: absolute;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+#button-zone {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 20px;
+
+    pointer-events: auto;
+}
+
+.action-button {
+
+    width: clamp(45px, 12vw, 80px);
+    height: clamp(45px, 12vw, 80px);
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.1s ease, transform 0.1s ease;
+    opacity: 0.7;
+
+}
+
+.action-button.pressed {
+    opacity: 1.0;
+
+    transform: scale(0.95);
+
+}
+
+.nipple {
+    opacity: 0.7;
+}
+
+.nipple.front {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.nipple.back {
+    background-color: rgba(128, 128, 128, 0.5) !important;
+}
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+                <style>
+            @font-face {
+        font-family: 'Press Start 2P';
+        src: url(data:font/woff2;base64,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) format('woff2');
+        font-weight: normal; font-style: normal; font-display: block;
+      }
+            /* ---- loading screen (in the style of the UNDERTALE port) ---- */
+            #loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                overflow: hidden;
+            }
+            #loading-overlay.hide { display: none; }
+            #loading-overlay .spinner { display: none !important; }
+            .dr-load-inner { display: flex; flex-direction: column; align-items: center; }
+            #drChapter {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 10px; color: #ffff00;
+                letter-spacing: 0.22em; text-indent: 0.22em;
+            }
+            #drChapterName {
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #fff;
+                letter-spacing: 0.3em; text-indent: 0.3em;
+                margin-top: 12px; min-height: 8px;
+            }
+            #drChapterName[hidden] { display: none; }
+            #drHeart { display: block; margin-top: 38px; }
+            #drPct {
+                margin-top: 34px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 18px; color: #fff;
+                letter-spacing: 0.06em;
+            }
+            #drStage {
+                margin-top: 18px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #6e6e6e;
+                letter-spacing: 0.28em; text-indent: 0.28em;
+                min-height: 10px; text-align: center; max-width: 92vw;
+            }
+            #drStage.err { color: #ff0000; letter-spacing: 0.14em; text-indent: 0.14em; }
+            #drHard {
+                margin-top: 14px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #ff003c;
+                letter-spacing: 0.28em; text-indent: 0.28em;
+            }
+            #drHard[hidden] { display: none; }
+            #drRetry {
+                margin-top: 30px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 11px; color: #ff9c00;
+                background: #000;
+                border: 2px solid #ff9c00;
+                padding: 12px 34px; cursor: pointer;
+            }
+            #drRetry:hover, #drRetry:focus-visible { background: #ff9c00; color: #000; }
+            #loading-overlay.done #drHeartFill { animation: drflash 0.32s steps(2, jump-none) 1; }
+            @keyframes drflash { 0% { fill: #fff; } 100% { fill: #ff0000; } }
+            .dr-bottom {
+                position: absolute; bottom: 14px; left: 0; right: 0;
+                display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px;
+                padding: 0 18px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #4a4a4a; letter-spacing: 0.12em;
+            }
+            .dr-bottom a { color: #4a4a4a; text-decoration: none; }
+            .dr-bottom a:hover, .dr-bottom a:focus-visible { color: #9e9e9e; }
+            .loading { visibility: hidden; }
+            @media (max-width: 480px) {
+                #drPct { font-size: 15px; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                #loading-overlay.done #drHeartFill { animation: none; }
+            }
+            /* ---- small SOUL (SVG, pixel-perfect) ---- */
+            .dr-soul { display: inline-block; vertical-align: middle; }
+            /* ---- quit overlay ---- */
+            #quit-overlay {
+                position: fixed; inset: 0; z-index: 99999;
+                background: #000; display: none;
+                flex-direction: column; justify-content: center; align-items: center;
+                font-family: 'Press Start 2P', monospace; color: #fff;
+                text-align: center;
+            }
+            #quit-overlay.visible { display: flex; }
+            .diff-title { font-size: 14px; letter-spacing: 0.12em; text-indent: 0.12em; margin-bottom: 24px; color: #fff; }
+            .diff-option { font-size: 11px; letter-spacing: 0.06em; padding: 12px 30px; cursor: pointer; display: flex; align-items: center; min-width: 240px; }
+            .diff-option .soul-slot { width: 34px; display: inline-flex; align-items: center; }
+            .diff-option.selected { color: #ffff00; }
+            .diff-optwrap { display: flex; flex-direction: column; margin-bottom: 34px; }
+            .diff-hint { font-size: 8px; color: #9a9a9a; letter-spacing: 0.1em; }
+            /* ---- thanks screen ---- */
+            .thanks-screen {
+                position: fixed; inset: 0; background: #000; z-index: 99999;
+                display: flex; flex-direction: column; justify-content: center; align-items: center;
+                font-family: 'Press Start 2P', monospace; color: #fff; text-align: center;
+            }
+            .thanks-title { font-size: 14px; letter-spacing: 0.12em; text-indent: 0.12em; display: flex; align-items: center; }
+            .thanks-title .dr-soul { margin-right: 22px; }
+            .thanks-sub { font-size: 8px; color: #9a9a9a; margin-top: 22px; letter-spacing: 0.1em; }
+            .thanks-screen a { color: #bdff00; font-size: 8px; margin-top: 34px; text-decoration: none; letter-spacing: 0.1em; }
+            .thanks-screen a:hover { text-decoration: underline; }
+            /* ---- hard mode toggle (Save File Manager) + mode badge ---- */
+            #hardModeRow { display: flex; flex-direction: column; gap: 6px; }
+            #hardModeToggle.on { outline-color: #ff003c; color: #ff4468; }
+            #hardModeState { font-size: 11px; color: #9a9a9a; font-family: "Lucida Console", Monaco, monospace; line-height: 1.5; }
+            #modeBadge.hard { background-color: #a30015 !important; outline-color: #ff003c; }
+            /* ---- mode-swap taunts ---- */
+            .dr-taunt {
+                position: fixed; inset: 0; z-index: 100000; background: #000;
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Press Start 2P', monospace; color: #fff; text-align: center;
+            }
+            .dr-taunt-inner { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+            .dr-soul-wrap { margin-top: 26px; display: flex; }
+            .dr-taunt-line { font-size: 10px; letter-spacing: 0.06em; color: #fff; min-height: 14px; margin-top: 16px; max-width: 92vw; line-height: 2; }
+            .dr-taunt-big { font-size: 26px; letter-spacing: 0.18em; text-indent: 0.18em; margin-top: 36px; }
+            .dr-taunt-big.red { color: #ff003c; }
+            .dr-taunt-big.yellow { color: #ffff00; }
+            .dr-taunt-big.slam { animation: drslam 0.35s ease-out; }
+            @keyframes drslam { 0% { transform: scale(2.4); opacity: 0; } 60% { transform: scale(0.94); opacity: 1; } 100% { transform: scale(1); } }
+            .dr-taunt-sub { font-size: 8px; color: #8f8f8f; margin-top: 22px; letter-spacing: 0.1em; }
+            .dr-taunt-hint { font-size: 8px; color: #6f6f6f; margin-top: 46px; letter-spacing: 0.1em; }
+        </style>
+</head>
+
+<body>
+    <div id="loading-overlay">
+        <div class="spinner" id="spinner"></div>
+        <div class="dr-load-inner">
+            <div id="drChapter">CHAPTER SELECT</div>
+            <div id="drChapterName" hidden></div>
+            <svg id="drHeart" viewBox="0 0 11 10" width="33" height="30" shape-rendering="crispEdges" aria-hidden="true">
+                <defs>
+                    <clipPath id="drHeartClip"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></clipPath>
+                </defs>
+                <g fill="#3a0508"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g>
+                <g clip-path="url(#drHeartClip)">
+                    <rect id="drHeartFill" x="0" y="10" width="11" height="10" fill="#ff0000"/>
+                </g>
+            </svg>
+            <div id="drPct">0%</div>
+            <div id="drStage">LOADING</div>
+            <div id="drHard" hidden>HARD MODE</div>
+            <button id="drRetry" type="button" hidden>RETRY</button>
+        </div>
+        <div class="dr-bottom">
+            <span>port by Kantasu</span>
+            <a id="drSiteLink" href="https://ddown325.github.io/deltarune-web/">full version</a>
+        </div>
+    </div>
+    <div id="quit-overlay">
+        <div class="diff-title">QUIT  THE  GAME?</div>
+        <div class="diff-optwrap">
+            <div class="diff-option" id="quit-yes" data-mode="yes">
+                <span class="soul-slot"><svg class="dr-soul" viewBox="0 0 11 10" width="16.5" height="15" shape-rendering="crispEdges" aria-hidden="true"><g fill="#ff0000"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g></svg></span>
+                <div>YES</div>
+            </div>
+            <div class="diff-option" id="quit-no" data-mode="no">
+                <span class="soul-slot"><svg class="dr-soul" viewBox="0 0 11 10" width="16.5" height="15" shape-rendering="crispEdges" aria-hidden="true"><g fill="#ff0000"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g></svg></span>
+                <div>NO</div>
+            </div>
+        </div>
+        <div class="diff-hint">[ARROWS] MOVE&nbsp;&nbsp;&nbsp;[Z / ENTER] CONFIRM</div>
+    </div>
+        <script>
+            // ============ loading screen + HARD MODE core ============
+            var DR_CHAPTER_NAMES = {
+                '1': 'THE BEGINNING',
+                '2': "A CYBER'S WORLD",
+                '3': 'LATE NIGHT',
+                '4': 'PROPHECY',
+                '5': 'FESTIVAL DAY'
+            };
+
+            (function () {
+                function dr$(id) { return document.getElementById(id); }
+
+                window.DRLoading = {
+                    visible: true,
+                    totalBytes: 0,
+                    loadedBytes: 0,
+                    complete: false,
+                    init: function (chapterLabel, chapterName, hard) {
+                        const ch = dr$('drChapter'); if (ch) ch.textContent = chapterLabel;
+                        const cn = dr$('drChapterName');
+                        if (cn) {
+                            if (chapterName) { cn.textContent = chapterName; cn.hidden = false; }
+                            else cn.hidden = true;
+                        }
+                        const hd = dr$('drHard'); if (hd) hd.hidden = !hard;
+                    },
+                    stage: function (s) {
+                        if (!this.visible) return;
+                        const el = dr$('drStage');
+                        if (el) { el.textContent = s; el.classList.remove('err'); }
+                    },
+                    // mirror the GameMaker loader status, cleaned up like the UT port
+                    statusText: function (t) {
+                        if (!this.visible || !t) return;
+                        t = String(t).replace(/[\s.]*\d+%\s*$/, '').replace(/\.+$/, '').trim();
+                        if (!t) return;
+                        var map = [
+                            [/download|fetch|data/i, 'LOADING ENGINE'],
+                            [/compil/i, 'LOADING ENGINE'],
+                            [/initialis|initializ|prepar/i, 'STARTING GAME'],
+                            [/start|run|enter/i, 'STARTING GAME']
+                        ];
+                        for (var i = 0; i < map.length; i++) {
+                            if (map[i][0].test(t)) return this.stage(map[i][1]);
+                        }
+                        this.stage(t.toUpperCase().slice(0, 24));
+                    },
+                    setArchiveTotals: function (total) { this.totalBytes = total; },
+                    addLoaded: function (delta) {
+                        this.loadedBytes += delta;
+                        this.renderProgress();
+                    },
+                    renderProgress: function () {
+                        if (!this.visible || !this.totalBytes) return;
+                        const frac = Math.max(0, Math.min(1, this.loadedBytes / this.totalBytes));
+                        const fill = dr$('drHeartFill');
+                        const pct = dr$('drPct');
+                        if (fill) fill.setAttribute('y', String(10 - 10 * frac));
+                        if (pct) pct.textContent = Math.floor(frac * 100) + '%';
+                        if (frac >= 0.999 && !this.complete) {
+                            this.complete = true;
+                            const ov = dr$('loading-overlay');
+                            if (ov) ov.classList.add('done');
+                        }
+                    },
+                    fail: function (msg) {
+                        const el = dr$('drStage');
+                        if (el) { el.textContent = msg; el.classList.add('err'); }
+                        const r = dr$('drRetry');
+                        if (r) r.hidden = false;
+                    },
+                    hide: function () {
+                        if (!this.visible) return;
+                        this.visible = false;
+                        const ov = dr$('loading-overlay');
+                        if (ov) ov.classList.add('hide');
+                    }
+                };
+
+                const retryBtn = dr$('drRetry');
+                if (retryBtn) retryBtn.addEventListener('click', function () { location.reload(); });
+            })();
+
+            // ============ HARD MODE (persistent toggle in the Save File Manager) ============
+            window.HARD_MODE_PATCHES = {"1":[[2571720,2],[2571722,15],[2571723,132],[2571724,0],[2571726,85],[2571727,8],[3490112,24],[3490116,0],[3490118,0],[3490119,192],[3490120,51],[3490121,51],[3490122,51],[3490123,51],[3490124,51],[3490125,51],[3490126,243],[3490127,63],[3490128,0],[3490130,80],[3490131,13],[3490134,85],[3490135,69],[3490136,8],[3490137,0],[3490140,251],[3490141,255],[3490142,5],[3490143,194],[3490144,100],[3490145,56],[3490146,0],[3490147,160],[3490148,0],[3490150,15],[3490151,132],[3490152,0],[3490153,2],[3490154,82],[3490155,21],[3490156,56],[3490159,184],[3490160,255],[3490161,255],[3490162,5],[3490163,192],[3490164,156],[3490165,0],[3490166,0],[3490167,160],[3490168,0],[3490170,15],[3490171,132],[3490173,3],[3490174,82],[3490175,21],[3474748,56],[2466944,188],[4207540,33]],"2":[[6424236,2],[6424238,15],[6424239,132],[6424240,0],[6424242,85],[6424243,8],[6425720,2],[6425722,15],[6425723,132],[6425724,0],[6425726,85],[6425727,8],[7948524,24],[7948528,0],[7948530,0],[7948531,192],[7948532,51],[7948533,51],[7948534,51],[7948535,51],[7948536,51],[7948537,51],[7948538,243],[7948539,63],[7948540,0],[7948542,80],[7948543,13],[7948546,85],[7948547,69],[7948548,8],[7948549,0],[7948552,251],[7948553,255],[7948554,5],[7948555,194],[7948556,92],[7948557,104],[7948558,0],[7948559,160],[7948560,0],[7948562,15],[7948563,132],[7948564,0],[7948565,2],[7948566,82],[7948567,21],[7948568,56],[7948571,184],[7948572,255],[7948573,255],[7948574,5],[7948575,192],[7948576,156],[7948577,0],[7948578,0],[7948579,160],[7948580,0],[7948582,15],[7948583,132],[7948585,3],[7948586,82],[7948587,21],[7928616,248],[6185264,20],[6185265,166],[6424456,76],[6424457,5],[11508348,117]],"3":[[6993976,2],[6993978,15],[6993979,132],[6993980,0],[6993981,0],[6993982,85],[6993983,8],[6996676,2],[6996678,15],[6996679,132],[6996680,0],[6996681,0],[6996682,85],[6996683,8],[12170436,24],[12170440,0],[12170442,0],[12170443,192],[12170444,51],[12170445,51],[12170446,51],[12170447,51],[12170448,51],[12170449,51],[12170450,243],[12170451,63],[12170452,0],[12170454,80],[12170455,13],[12170458,85],[12170459,69],[12170460,8],[12170461,0],[12170464,251],[12170465,255],[12170466,5],[12170467,194],[12170468,28],[12170469,190],[12170470,0],[12170471,160],[12170472,0],[12170474,15],[12170475,132],[12170476,0],[12170477,2],[12170478,82],[12170479,21],[12170480,56],[12170483,184],[12170484,255],[12170485,255],[12170486,5],[12170487,192],[12170488,156],[12170489,0],[12170490,0],[12170491,160],[12170492,0],[12170494,15],[12170495,132],[12170497,3],[12170498,82],[12170499,21],[12143232,120],[6677908,104],[6677909,213],[6994772,196],[6994773,9],[13956468,98]],"4":[[17723368,2],[17723370,15],[17723371,132],[17723372,0],[17723374,85],[17723375,8],[17726620,2],[17726622,15],[17726623,132],[17726624,0],[17726626,85],[17726627,8],[23324780,24],[23324784,0],[23324786,0],[23324787,192],[23324788,51],[23324789,51],[23324790,51],[23324791,51],[23324792,51],[23324793,51],[23324794,243],[23324795,63],[23324796,0],[23324798,80],[23324799,13],[23324802,85],[23324803,69],[23324804,8],[23324805,0],[23324808,251],[23324809,255],[23324810,5],[23324811,194],[23324812,48],[23324813,8],[23324814,0],[23324815,160],[23324816,0],[23324818,15],[23324819,132],[23324820,0],[23324821,2],[23324822,82],[23324823,21],[23324824,56],[23324827,184],[23324828,255],[23324829,255],[23324830,5],[23324831,192],[23324832,156],[23324833,0],[23324834,0],[23324835,160],[23324836,0],[23324838,15],[23324839,132],[23324841,3],[23324842,82],[23324843,21],[23301144,136],[17396944,176],[17723708,188],[25397276,137]],"5":[[11843196,2],[11843198,15],[11843199,132],[11843200,0],[11843202,85],[11843203,8],[11845132,2],[11845134,15],[11845135,132],[11845136,0],[11845138,85],[11845139,8],[19092216,24],[19092220,0],[19092222,0],[19092223,192],[19092224,51],[19092225,51],[19092226,51],[19092227,51],[19092228,51],[19092229,51],[19092230,243],[19092231,63],[19092232,0],[19092234,80],[19092235,13],[19092238,85],[19092239,69],[19092240,8],[19092241,0],[19092244,251],[19092245,255],[19092246,5],[19092247,194],[19092248,144],[19092249,177],[19092250,0],[19092251,160],[19092252,0],[19092254,15],[19092255,132],[19092256,0],[19092257,2],[19092258,82],[19092259,21],[19092260,82],[19092263,184],[19092264,255],[19092265,255],[19092266,5],[19092267,192],[19092268,156],[19092269,0],[19092270,0],[19092271,160],[19092272,0],[19092274,15],[19092275,132],[19092277,3],[19092278,82],[19092279,21],[19067888,60],[11843120,196],[11845056,168],[21547244,192]]};
+            const HARD_MODE_STORAGE_KEY = 'dr_webport_hardmode';
+            let hardModeActive = (function () {
+                try { return localStorage.getItem(HARD_MODE_STORAGE_KEY) === '1'; } catch (e) { return false; }
+            })();
+
+            function updateModeBadge() {
+                const badge = document.getElementById('modeBadge');
+                if (!badge) return;
+                if (hardModeActive) {
+                    badge.textContent = 'HARD MODE';
+                    badge.classList.add('hard');
+                } else {
+                    badge.textContent = 'MODE: NORMAL';
+                    badge.classList.remove('hard');
+                }
+            }
+
+            window.DRHardMode = {
+                toggle: function () {
+                    const was = hardModeActive;
+                    hardModeActive = !was;
+                    try { localStorage.setItem(HARD_MODE_STORAGE_KEY, hardModeActive ? '1' : '0'); } catch (e) {}
+                    this.render();
+                    updateModeBadge();
+                    if (was && !hardModeActive) showCowardTaunt();
+                    else if (!was && hardModeActive) showHardOnTaunt();
+                },
+                render: function () {
+                    const btn = document.getElementById('hardModeToggle');
+                    const state = document.getElementById('hardModeState');
+                    if (btn) {
+                        btn.textContent = hardModeActive ? 'HARD MODE: ON' : 'HARD MODE: OFF';
+                        btn.classList.toggle('on', hardModeActive);
+                    }
+                    if (state) {
+                        state.textContent = hardModeActive
+                            ? 'ON - enemies deal 2x damage and their attacks run 1.2x as fast. Applies the next time you load a chapter.'
+                            : 'OFF - turn it on... if you dare. (Enemies deal 2x damage, attacks run 1.2x as fast.)';
+                    }
+                }
+            };
+
+            // ============ mode-swap taunts ============
+            const DR_SOUL = '<svg class="dr-soul" viewBox="0 0 11 10" width="16.5" height="15" shape-rendering="crispEdges" aria-hidden="true"><g fill="#ff0000"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g></svg>';
+            function drTaunt(introText, bigText, bigClass, subText) {
+                const ov = document.createElement('div');
+                ov.className = 'dr-taunt';
+                ov.innerHTML = '<div class="dr-taunt-inner">' +
+                    '<div class="dr-soul-wrap">' + DR_SOUL + '</div>' +
+                    '<div class="dr-taunt-line"></div>' +
+                    '<div class="dr-taunt-big ' + (bigClass || '') + '"></div>' +
+                    (subText ? '<div class="dr-taunt-sub">' + subText + '</div>' : '') +
+                    '<div class="dr-taunt-hint">[Z] OK</div>' +
+                    '</div>';
+                document.body.appendChild(ov);
+                const line = ov.querySelector('.dr-taunt-line');
+                const big = ov.querySelector('.dr-taunt-big');
+                const hint = ov.querySelector('.dr-taunt-hint');
+                big.textContent = bigText;
+                big.style.visibility = 'hidden';
+                hint.style.visibility = 'hidden';
+                let i = 0, done = false, autoT = null;
+                const tw = setInterval(function () {
+                    i++;
+                    line.textContent = introText.slice(0, i);
+                    if (i >= introText.length) {
+                        clearInterval(tw);
+                        setTimeout(function () {
+                            if (done) return;
+                            big.style.visibility = '';
+                            big.classList.add('slam');
+                            hint.style.visibility = '';
+                        }, 700);
+                    }
+                }, 34);
+                function close() {
+                    if (done) return;
+                    done = true;
+                    clearInterval(tw);
+                    clearTimeout(autoT);
+                    document.removeEventListener('keydown', onKey);
+                    ov.remove();
+                }
+                function onKey(e) { if (['z', 'Z', 'Enter', ' '].indexOf(e.key) >= 0) { e.preventDefault(); close(); } }
+                document.addEventListener('keydown', onKey);
+                ov.addEventListener('click', close);
+                autoT = setTimeout(close, 7000);
+            }
+            function showCowardTaunt() {
+                drTaunt('* You turned HARD MODE off.', 'COWARD.', 'red', '( IT WILL BE WAITING FOR YOU. )');
+            }
+            function showHardOnTaunt() {
+                drTaunt('* You turned HARD MODE on.', 'GOOD LUCK.', 'yellow', "( YOU'LL NEED IT. )");
+            }
+
+            // ============ quit (chapter select) ============
+            function makeMenuPicker(overlayId, optionIds, initialIndex, onConfirm) {
+                const overlay = document.getElementById(overlayId);
+                let index = initialIndex;
+                function render() {
+                    optionIds.forEach(function (oid, i) {
+                        const el = document.getElementById(oid);
+                        el.classList.toggle('selected', i === index);
+                        const soul = el.querySelector('.dr-soul');
+                        if (soul) soul.style.display = (i === index) ? '' : 'none';
+                    });
+                }
+                function confirmChoice() {
+                    cleanup();
+                    overlay.classList.remove('visible');
+                    onConfirm(index);
+                }
+                function onKey(e) {
+                    if (['ArrowUp', 'ArrowLeft', 'w', 'W'].includes(e.key)) { index = (index + optionIds.length - 1) % optionIds.length; render(); e.preventDefault(); }
+                    else if (['ArrowDown', 'ArrowRight', 's', 'S'].includes(e.key)) { index = (index + 1) % optionIds.length; render(); e.preventDefault(); }
+                    else if (['Enter', 'z', 'Z', ' '].includes(e.key)) { confirmChoice(); e.preventDefault(); }
+                }
+                function onClick(e) {
+                    const opt = e.target.closest('.diff-option');
+                    if (!opt) return;
+                    index = optionIds.indexOf(opt.id);
+                    if (index < 0) return;
+                    render();
+                    confirmChoice();
+                }
+                function cleanup() {
+                    document.removeEventListener('keydown', onKey);
+                    overlay.removeEventListener('click', onClick);
+                }
+                document.addEventListener('keydown', onKey);
+                overlay.addEventListener('click', onClick);
+                render();
+                overlay.classList.add('visible');
+            }
+
+            function showQuitConfirm() {
+                makeMenuPicker('quit-overlay', ['quit-yes', 'quit-no'], 0, function (idx) {
+                    if (idx === 0) doQuit();
+                });
+            }
+
+            function doQuit() {
+                try { window.close(); } catch (e) {}
+                setTimeout(function () {
+                    if (!window.closed) showThanksScreen();
+                }, 250);
+            }
+
+            function showThanksScreen() {
+                // do NOT wipe document.body - the GameMaker runtime keeps the
+                // <style> tags inside <body>, nuking them kills all CSS.
+                // the overlay is opaque + fixed + z-99999, it covers the game.
+                try { if (typeof Module !== 'undefined' && Module.pauseMainLoop) Module.pauseMainLoop(); } catch (e) {}
+                try { GM_pause(); } catch (e) {}
+                const screen = document.createElement('div');
+                screen.className = 'thanks-screen';
+                screen.innerHTML = '<div class="thanks-title">' + DR_SOUL + '<div>THANK  YOU  FOR  PLAYING</div></div>' +
+                    '<div class="thanks-sub">YOU CAN CLOSE THIS TAB NOW.</div>' +
+                    '<a href="?c=0">&gt; BACK TO CHAPTER SELECT</a>';
+                document.body.appendChild(screen);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                updateModeBadge();
+                window.DRHardMode.render();
+            });
+        </script>
+    <div id="game-container">
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+        <div class="loading">
+            <div class="emscripten" id="status"></div>
+            <progress value="0" max="100" id="progress" hidden="0"></progress>
+        </div>
+        <div id="mobile-controls">
+            <div id="joystick-zone"></div>
+            <div id="button-zone">
+                <img class="action-button" id="button-c" alt="C Button">
+                <img class="action-button" id="button-x" alt="X Button">
+                <img class="action-button" id="button-z" alt="Z Button">
+            </div>
+        </div>
+        <div class="output-container" id="output-container">
+            <button class="output-button" id="modeBadge" onclick="window.DeltaruneSaveManager.openSaveManager()" title="Difficulty settings (opens the Save File Manager)">MODE: NORMAL</button>
+            <button class="output-button" id="fullscreen" title="Toggle Fullscreen">Toggle Fullscreen?</button>
+            <button class="output-button" onclick="toggleConsole()" title="Lists emscripten/GM console output and loading progress">Toggle Console!</button>
+            <button class="output-button" id="stats-button" onclick="toggleFPS()" title="Toggles the external FPS Counter">Toggle FPS Counter!</button>
+            <button class="output-button" onclick="window.DeltaruneSaveManager.openSaveManager()" title="Manage your DELTARUNE save files">Save Manager!</button>
+            <button class="output-button" onclick="toggleWASD()" title="Toggles Mirroring Arrow Keys to WASD for easier control">Toggle Arrow & WASD Controls!</button>
+            <input id="colorpicker" type="color" onchange="changecolor(this)" title="Changes Color of the Website's Background">
+            <textarea id="output"></textarea>
+        </div>
+        <button id="closeUIButton" onclick="hideUI()">&times;</button>
+        <div id="message-container">
+            <div id="messages"></div>
+        </div>
+    </div>
+
+    <div id="customMessageBox" class="custom-message-box">
+        <div class="custom-message-box-content">
+            <p id="messageBoxText"></p>
+            <button id="messageBoxConfirmBtn">OK</button>
+        </div>
+    </div>
+
+    <div id="saveManagerModal" class="save-manager-modal">
+        <div class="save-manager-content">
+            <span class="close-button" onclick="window.DeltaruneSaveManager.closeSaveManager()">&times;</span>
+            <div class="save-manager-content2">
+                <span class="minimize-button" onclick="window.DeltaruneSaveManager.closeSMnoreload()">&dash;</span>
+                <h2>Save File Manager!</h2>
+                <button class="output-button" onclick="toggleclear_site_cache()">Wipe all of your saves?</button>
+                <button id="exportAllBtn" class="output-button" onclick="DeltaruneSaveManager.exportAllToZip()">Export all saves to ZIP?</button>
+                <h3>Difficulty:</h3>
+                <div id="hardModeRow">
+                    <button class="output-button" id="hardModeToggle" onclick="window.DRHardMode.toggle()">HARD MODE: OFF</button>
+                    <span id="hardModeState">OFF - turn it on... if you dare.</span>
+                </div>
+                <h3>Current Save Files:</h3>
+                <div id="saveFileList" class="save-file-list">
+                    <p style="text-align: center; color: #888;">No saves found. Try importing one or saving in-game first.</p>
+                </div>
+                <div class="file-upload-section">
+                    <h3>Import Save Files?</h3>
+                    <input type="file" id="uploadFileInput" accept="*" multiple>
+                        <input type="text" id="uploadFileNameInput" placeholder="Enter the corresponding filename (e.g., filech1_0, dr.ini / for single file only)">
+                            <button onclick="DeltaruneSaveManager.handleUpload()">Select File(s)!</button>
+                        </div>
+            </div>
+        </div>
+        <script>
+            (function(window) {
+                const WASD_CONTROLLER = {
+                    isEnabled: false,
+                    boundHandler: null,
+                    
+                    eventTarget: document.body,
+                    
+                    keyMap: {
+                        'w': {
+                            key: 'ArrowUp',
+                            code: 'ArrowUp',
+                            keyCode: 38
+                        },
+                        'a': {
+                            key: 'ArrowLeft',
+                            code: 'ArrowLeft',
+                            keyCode: 37
+                        },
+                        's': {
+                            key: 'ArrowDown',
+                            code: 'ArrowDown',
+                            keyCode: 40
+                        },
+                        'd': {
+                            key: 'ArrowRight',
+                            code: 'ArrowRight',
+                            keyCode: 39
+                        },
+                        'W': {
+                            key: 'ArrowUp',
+                            code: 'ArrowUp',
+                            keyCode: 38
+                        },
+                        'A': {
+                            key: 'ArrowLeft',
+                            code: 'ArrowLeft',
+                            keyCode: 37
+                        },
+                        'S': {
+                            key: 'ArrowDown',
+                            code: 'ArrowDown',
+                            keyCode: 40
+                        },
+                        'D': {
+                            key: 'ArrowRight',
+                            code: 'ArrowRight',
+                            keyCode: 39
+                        }
+                    },
+                    
+                    handleKeyEvent: function(event) {
+                        if (!this.isEnabled) return;
+                        
+                        const targetNode = event.target.nodeName.toLowerCase();
+                        if (targetNode === 'input' || targetNode === 'textarea' || event.target.isContentEditable) {
+                            return;
+                        }
+                        
+                        const keyData = this.keyMap[event.key];
+                        
+                        if (keyData) {
+                            
+                            event.preventDefault();
+                            event.stopPropagation();
+                            
+                            const arrowKeyEvent = new KeyboardEvent(event.type, {
+                                key: keyData.key,
+                                code: keyData.code,
+                                bubbles: true,
+                                cancelable: true,
+                                composed: true,
+                            });
+                            
+                            Object.defineProperty(arrowKeyEvent, 'keyCode', {
+                                value: keyData.keyCode,
+                                writable: false
+                            });
+                            Object.defineProperty(arrowKeyEvent, 'which', {
+                                value: keyData.keyCode,
+                                writable: false
+                            });
+                            
+                            this.eventTarget.dispatchEvent(arrowKeyEvent);
+                        }
+                    },
+                    
+                    enable: function() {
+                        if (this.isEnabled) return;
+                        this.boundHandler = this.boundHandler || this.handleKeyEvent.bind(this);
+                        
+                        document.addEventListener('keydown', this.boundHandler, true);
+                        document.addEventListener('keyup', this.boundHandler, true);
+                        this.isEnabled = true;
+                        console.log('WASD -> arrow key control has been ENABLED! Target:', this.eventTarget);
+                    },
+                    
+                    disable: function() {
+                        if (!this.isEnabled || !this.boundHandler) return;
+                        document.removeEventListener('keydown', this.boundHandler, true);
+                        document.removeEventListener('keyup', this.boundHandler, true);
+                        this.isEnabled = false;
+                        console.log('WASD -> arrow key control has been DISABLED!');
+                    },
+                    
+                    toggle: function() {
+                        if (this.isEnabled) {
+                            this.disable();
+                        } else {
+                            this.enable();
+                        }
+                    }
+                };
+                
+                window.toggleWASD = WASD_CONTROLLER.toggle.bind(WASD_CONTROLLER);
+                
+            })(window);
+        </script>
+        <script>
+            const konamiCode = ['p', 'i', 'e'];
+            let konamiIndex = 0;
+            
+            function hideUI() {
+                document.getElementById('output-container').classList.remove('visible');
+                document.getElementById('message-container').classList.add('hidden-ui');
+                document.getElementById('closeUIButton').style.display = 'none';
+            }
+            
+            function showUI() {
+                document.getElementById('output-container').classList.add('visible');
+                document.getElementById('message-container').classList.remove('hidden-ui');
+                document.getElementById('closeUIButton').style.display = 'block';
+                ensureAspectRatio();
+            }
+            document.addEventListener('keydown', (e) => {
+                if (e.key === konamiCode[konamiIndex]) {
+                    konamiIndex++;
+                    if (konamiIndex === konamiCode.length) {
+                        showUI();
+                        konamiIndex = 0;
+                    }
+                } else {
+                    konamiIndex = 0;
+                }
+            });
+            window.addEventListener('load', () => {
+                document.getElementById('output-container').classList.remove('visible');
+                document.querySelector('.loading').classList.add('hidden-ui');
+                document.getElementById('message-container').classList.add('hidden-ui');
+                document.getElementById('closeUIButton').style.display = 'none';
+            });
+        </script>
+        
+        <script type="text/javascript">
+            function changecolor(el) {
+                document.body.style.backgroundColor = el.value;
+            }
+            const CHANGE_ASPECT_RATIO = true;
+            var bodyElement = document.getElementsByTagName("body")[0];
+            var statusElement = document.getElementById("status");
+            var progressElement = document.getElementById("progress");
+            var spinnerElement = document.getElementById("spinner");
+            var canvasElement = document.getElementById("canvas");
+            var outputElement = document.getElementById("output");
+            var outputContainerElement = document.getElementById("output-container");
+            const messageContainerElement = document.getElementById("message-container");
+            const messagesElement = document.getElementById("messages");
+            let rollbackMessages = [];
+            const CONSOLE_layer_set_visible = "layer_set_visible() - could not find specified layer in current room";
+            const CONSOLE_layer_tilemap_get_id = "layer_tilemap_get_id() - specified tilemap not found";
+            const CONSOLE_layer_depth = "layer_depth() - can't find specified layer";
+            const CONSOLE_draw_tilemap = "draw_tilemap() - couldn't find specified tilemap";
+            const CONSOLE_layer_get_all_elements = "layer_get_all_elements() - can't find specified layer";
+            let clearRollbackMessagesTimeoutId = -1;
+            const showRollbackMessage = function(message) {
+                let messages = "";
+                rollbackMessages.push(message);
+                rollbackMessages.forEach(m => messages += " < p > " + m + " < /p>");
+                messagesElement.innerHTML = messages;
+                messageContainerElement.style.display = 'block';
+                if (clearRollbackMessagesTimeoutId === -1) {
+                    clearTimeout(clearRollbackMessagesTimeoutId);
+                }
+                clearRollbackMessagesTimeoutId = setTimeout(clearRollbackMessages, 5000);
+            };
+            const clearRollbackMessages = function() {
+                clearRollbackMessagesTimeoutId = -1;
+                rollbackMessages = [];
+                messageContainerElement.style.display = 'none';
+            };
+            var loadprogress = 0;
+            var startingHeight, startingWidth;
+            var startingAspect;
+            var Module = {
+                preRun: [],
+                postRun: [],
+                print: (function() {
+                    var element = document.getElementById("output");
+                    if (element) element.value = "";
+                    return function(text) {
+                        if (text === "Starting WAD") {
+                            loadprogress += 1;
+                        }
+                        if (loadprogress === 1) {
+                            Module.setStatus(text);
+                        } else if (loadprogress >= 2) {
+                            Module.setStatus("");
+                        }
+                        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(" ");
+                        if (text != CONSOLE_layer_set_visible && text != CONSOLE_layer_tilemap_get_id && text != CONSOLE_layer_depth && text != CONSOLE_draw_tilemap && text != CONSOLE_layer_get_all_elements) {
+                            console.log(text);
+                        }
+                        if (text === "Entering main loop.") {
+                            ensureAspectRatio();
+                            loadprogress += 1;
+                        }
+                        if (element) {
+                            if (text != CONSOLE_layer_set_visible && text != CONSOLE_layer_tilemap_get_id && text != CONSOLE_layer_depth && text != CONSOLE_draw_tilemap && text != CONSOLE_layer_get_all_elements) {
+                                element.value += text + "\n";
+                            }
+                            element.scrollTop = element.scrollHeight;
+                        }
+                    };
+                })(),
+                printErr: function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(" ");
+                    console.error(text);
+                },
+                canvas: (function() {
+                    return document.getElementById("canvas");
+                })(),
+                setStatus: function(text) {
+                    if (!Module.setStatus.last) Module.setStatus.last = {
+                        time: Date.now(),
+                        text: ""
+                    };
+                    if (text === Module.setStatus.last.text) return;
+                    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    var now = Date.now();
+                    if (m && now - Module.setStatus.last.time < 30) return;
+                    Module.setStatus.last.time = now;
+                    Module.setStatus.last.text = text;
+                    if (m) {
+                        text = m[1];
+                        progressElement.value = parseInt(m[2]) * 100;
+                        progressElement.max = parseInt(m[4]) * 100;
+                        progressElement.hidden = false;
+                        spinnerElement.hidden = false;
+                    } else {
+                        progressElement.value = null;
+                        progressElement.max = null;
+                        progressElement.hidden = true;
+                        if (!text) {
+                            spinnerElement.style.display = "none";
+                            canvasElement.style.display = "block";
+                        }
+                    }
+                    statusElement.innerHTML = text;
+                    try { if (window.DRLoading) window.DRLoading.statusText(text); } catch (e) {}
+                },
+                totalDependencies: 0,
+                monitorRunDependencies: function(left) {
+                    this.totalDependencies = Math.max(this.totalDependencies, left);
+                    Module.setStatus(left ? "Preparing... (" + (this.totalDependencies - left) + "/" + this.totalDependencies + ")" : "All downloads complete.");
+                },
+            };
+            Module.setStatus("Downloading...");
+            window.onerror = function(event) {
+                spinnerElement.style.display = "none";
+                Module.setStatus = function(text) {
+                    if (text) Module.printErr("[post-exception status] " + text);
+                };
+            };
+            if (typeof window === "object") {
+                Module['arguments'] = window.location.search.substr(1).trim().split('&');
+                if (!Module['arguments'][0]) {
+                    Module['arguments'] = [];
+                }
+            }
+            
+            function toggleConsole() {
+                var isShown = outputElement.style.display === "flex";
+                if (isShown) {
+                    outputElement.style.display = "none";
+                    outputElement.scrollIntoView(false);
+                } else {
+                    outputElement.style.display = "flex";
+                    outputElement.scrollIntoView(true);
+                }
+            }
+            async function toggleclear_site_cache() {
+                
+                const confirmed = await window.DeltaruneSaveManager.confirmBox("This will clear the site cache. Most importantly, this will ALSO clear ALL OF YOUR SAVES. ONLY do this if you know what you are doing or if the site/game crashes repeatedly. Still wanna continue?");
+                if (confirmed) {
+                    try {
+                        const dbs = await window.indexedDB.databases();
+                        dbs.forEach(db => {
+                            window.indexedDB.deleteDatabase(db.name)
+                        });
+                        window.DeltaruneSaveManager.showMessageBox("All site data has been cleared!\nPlease reload the page for it to take effect.");
+                    } catch (error) {
+                        console.error("Error clearing IndexedDB:", error);
+                        window.DeltaruneSaveManager.showMessageBox("Failed to clear site data. Error: " + error.message);
+                    }
+                }
+            }
+            
+            (function(window) {
+                
+                let stats = null;
+                let isLoaded = false;
+                let isVisible = false;
+                
+                function animationLoop() {
+                    if (stats) {
+                        stats.update();
+                        requestAnimationFrame(animationLoop);
+                    }
+                }
+                
+                function init() {
+                    
+                    stats = new Stats();
+                    
+                    stats.showPanel(0);
+                    
+                    document.body.appendChild(stats.dom);
+                    
+                    requestAnimationFrame(animationLoop);
+                    
+                    isLoaded = true;
+                    isVisible = true;
+                    console.log('FPS counter initialized!');
+                }
+                
+                function toggle() {
+                    
+                    if (!isLoaded) {
+                        console.log('Loading stats.js library...');
+                        
+                        const script = document.createElement('script');
+                        script.src = 'https://mrdoob.github.io/stats.js/build/stats.min.js';
+                        
+                        script.onload = init;
+                        
+                        document.head.appendChild(script);
+                        return;
+                    }
+                    
+                    if (isVisible) {
+                        
+                        stats.dom.style.display = 'none';
+                        isVisible = false;
+                        console.log('FPS counter hidden.');
+                    } else {
+                        
+                        stats.dom.style.display = 'block';
+                        isVisible = true;
+                        console.log('FPS counter shown.');
+                    }
+                }
+                
+                window.toggleFPS = toggle;
+                
+            })(window);
+            
+            var g_pWadLoadCallback = undefined;
+            
+            function setWadLoadCallback(_wadLoadCallback) {
+                g_pWadLoadCallback = _wadLoadCallback;
+            }
+            var g_pAddAsyncMethod = -1;
+            
+            function setAddAsyncMethod(asyncMethod) {
+                g_pAddAsyncMethod = asyncMethod;
+            }
+            var g_pJSExceptionHandler = undefined;
+            
+            function setJSExceptionHandler(exceptionHandler) {
+                if (typeof exceptionHandler == "function") {
+                    g_pJSExceptionHandler = exceptionHandler;
+                }
+            }
+            
+            function hasJSExceptionHandler() {
+                return (g_pJSExceptionHandler != undefined) && (typeof g_pJSExceptionHandler == "function");
+            }
+            
+            function doJSExceptionHandler(exceptionJSON) {
+                if (typeof g_pJSExceptionHandler == "function") {
+                    var exception = JSON.parse(exceptionJSON);
+                    g_pJSExceptionHandler(exception);
+                }
+            }
+            
+            function manifestFiles() {
+                if (Array.isArray(window.GM_EXTERNAL_FILES)) {
+                    return window.GM_EXTERNAL_FILES.join(";");
+                }
+                return [ "chapter1_windows/AUDIO_INTRONOISE.ogg", "chapter1_windows/audiogroup1.dat", "chapter1_windows/lang/lang_en.json", "chapter1_windows/lang/lang_ja.json", "chapter1_windows/snd_closet_fall.ogg", "chapter1_windows/snd_closet_impact.ogg", "chapter1_windows/snd_great_shine.ogg", "chapter1_windows/snd_paper_rumble.ogg", "chapter1_windows/snd_paper_surf.ogg", "chapter1_windows/snd_revival.ogg", "chapter1_windows/snd_rurus_appear.ogg", "chapter1_windows/snd_usefountain.ogg", "chapter2_windows/AUDIO_INTRONOISE.ogg", "chapter2_windows/audiogroup1.dat", "chapter2_windows/lang/lang_ja.json", "chapter2_windows/snd_bigcar_yelp.ogg", "chapter2_windows/snd_closet_fall.ogg", "chapter2_windows/snd_closet_impact.ogg", "chapter2_windows/snd_dtrans_drone.ogg", "chapter2_windows/snd_dtrans_flip.ogg", "chapter2_windows/snd_dtrans_heavypassing.ogg", "chapter2_windows/snd_dtrans_lw.ogg", "chapter2_windows/snd_dtrans_square.ogg", "chapter2_windows/snd_dtrans_twinkle.ogg", "chapter2_windows/snd_fountain_make.ogg", "chapter2_windows/snd_fountain_target.ogg", "chapter2_windows/snd_ghostappear.ogg", "chapter2_windows/snd_great_shine.ogg", "chapter2_windows/snd_him_quick.ogg", "chapter2_windows/snd_hitcar.ogg", "chapter2_windows/snd_hitcar_little.ogg", "chapter2_windows/snd_icespell.ogg", "chapter2_windows/snd_paper_rumble.ogg", "chapter2_windows/snd_paper_surf.ogg", "chapter2_windows/snd_power", "chapter2_windows/snd_revival.ogg", "chapter2_windows/snd_rurus_appear.ogg", "chapter2_windows/snd_smallcar_yelp.ogg", "chapter2_windows/snd_snowgrave.ogg", "chapter2_windows/snd_spell_pacify.ogg", "chapter2_windows/snd_usefountain.ogg", "chapter3_windows/AUDIO_INTRONOISE.ogg", "chapter3_windows/audiogroup1.dat", "chapter3_windows/lang/lang_ja.json", "chapter3_windows/snd_bigcar_yelp.ogg", "chapter3_windows/snd_closet_fall.ogg", "chapter3_windows/snd_closet_impact.ogg", "chapter3_windows/snd_dtrans_drone.ogg", "chapter3_windows/snd_dtrans_flip.ogg", "chapter3_windows/snd_dtrans_heavypassing.ogg", "chapter3_windows/snd_dtrans_lw.ogg", "chapter3_windows/snd_dtrans_square.ogg", "chapter3_windows/snd_dtrans_twinkle.ogg", "chapter3_windows/snd_fountain_make.ogg", "chapter3_windows/snd_fountain_target.ogg", "chapter3_windows/snd_ghostappear.ogg", "chapter3_windows/snd_great_shine.ogg", "chapter3_windows/snd_him_quick.ogg", "chapter3_windows/snd_hitcar.ogg", "chapter3_windows/snd_hitcar_little.ogg", "chapter3_windows/snd_icespell.ogg", "chapter3_windows/snd_paper_rumble.ogg", "chapter3_windows/snd_paper_surf.ogg", "chapter3_windows/snd_revival.ogg", "chapter3_windows/snd_rurus_appear.ogg", "chapter3_windows/snd_smallcar_yelp.ogg", "chapter3_windows/snd_snowgrave.ogg", "chapter3_windows/snd_spell_pacify.ogg", "chapter3_windows/snd_usefountain.ogg", "chapter3_windows/vid/tennaIntroF1_compressed_28.mp4", "chapter3_windows/vid/tennaIntroJPf1_compressed_28.mp4", "chapter4_windows/AUDIO_INTRONOISE.ogg", "chapter4_windows/audiogroup1.dat", "chapter4_windows/lang/lang_ja.json", "chapter4_windows/mus_undynescary.ogg", "chapter4_windows/snd_bigcar_yelp.ogg", "chapter4_windows/snd_closet_fall.ogg", "chapter4_windows/snd_closet_impact.ogg", "chapter4_windows/snd_dtrans_drone.ogg", "chapter4_windows/snd_dtrans_flip.ogg", "chapter4_windows/snd_dtrans_heavypassing.ogg", "chapter4_windows/snd_dtrans_lw.ogg", "chapter4_windows/snd_dtrans_square.ogg", "chapter4_windows/snd_dtrans_twinkle.ogg", "chapter4_windows/snd_fountain_make.ogg", "chapter4_windows/snd_fountain_target.ogg", "chapter4_windows/snd_ghostappear.ogg", "chapter4_windows/snd_great_shine.ogg", "chapter4_windows/snd_him_quick.ogg", "chapter4_windows/snd_hitcar.ogg", "chapter4_windows/snd_hitcar_little.ogg", "chapter4_windows/snd_icespell.ogg", "chapter4_windows/snd_paper_rumble.ogg", "chapter4_windows/snd_paper_surf.ogg", "chapter4_windows/snd_revival.ogg", "chapter4_windows/snd_rurus_appear.ogg", "chapter4_windows/snd_smallcar_yelp.ogg", "chapter4_windows/snd_snowgrave.ogg", "chapter4_windows/snd_spell_pacify.ogg", "chapter4_windows/snd_usefountain.ogg", "chapter5_windows/AUDIO_INTRONOISE.ogg", "chapter5_windows/audiogroup1.dat", "chapter5_windows/execute_program_pipe_x64.dll", "chapter5_windows/lang/lang_ja.json", "chapter5_windows/shader_replace_simple_x64.dll", "chapter5_windows/snd_bigcar_yelp.ogg", "chapter5_windows/snd_churchbell.ogg", "chapter5_windows/snd_closet_fall.ogg", "chapter5_windows/snd_closet_impact.ogg", "chapter5_windows/snd_dtrans_drone.ogg", "chapter5_windows/snd_dtrans_flip.ogg", "chapter5_windows/snd_dtrans_heavypassing.ogg", "chapter5_windows/snd_dtrans_lw.ogg", "chapter5_windows/snd_dtrans_square.ogg", "chapter5_windows/snd_dtrans_twinkle.ogg", "chapter5_windows/snd_fountain_make.ogg", "chapter5_windows/snd_fountain_target.ogg", "chapter5_windows/snd_ghostappear.ogg", "chapter5_windows/snd_great_shine.ogg", "chapter5_windows/snd_him_quick.ogg", "chapter5_windows/snd_hitcar.ogg", "chapter5_windows/snd_hitcar_little.ogg", "chapter5_windows/snd_icespell.ogg", "chapter5_windows/snd_paper_rumble.ogg", "chapter5_windows/snd_paper_surf.ogg", "chapter5_windows/snd_revival.ogg", "chapter5_windows/snd_rurus_appear.ogg", "chapter5_windows/snd_smallcar_yelp.ogg", "chapter5_windows/snd_snowgrave.ogg", "chapter5_windows/snd_spell_pacify.ogg", "chapter5_windows/snd_usefountain.ogg", "chapter5_windows/vid/ch5_intro_en.mp4", "chapter5_windows/vid/ch5_intro_jp.mp4", "mus/4rd_sanctuary.ogg", "mus/4rd_sanctuary_noguit.ogg", "mus/AUDIO_ANOTHERHIM.ogg", "mus/AUDIO_DARKNESS.ogg", "mus/AUDIO_DEFEAT.ogg", "mus/AUDIO_DRONE.ogg", "mus/AUDIO_STORY.ogg", "mus/Flowerman_Arrangement.ogg", "mus/GALLERY.ogg", "mus/KEYGEN.ogg", "mus/THE_HOLY.ogg", "mus/TV_GAME.ogg", "mus/acid_tunnel.ogg", "mus/afterrain_inside.ogg", "mus/alarm_titlescreen.ogg", "mus/alley_ambience.ogg", "mus/alt_church_lobby.ogg", "mus/ambientwater_weird.ogg", "mus/annoying_prophecy.ogg", "mus/april_2012.ogg", "mus/asgore_conspiracy.ogg", "mus/asgore_serious.ogg", "mus/asgore_serious_drum_only_flowery_version.ogg", "mus/asgore_serious_drum_only_low.ogg", "mus/baci_distort.ogg", "mus/baci_perugina.ogg", "mus/basement.ogg", "mus/battle.ogg", "mus/battle_preview.ogg", "mus/battle_preview_crisp.ogg", "mus/battle_vapor.ogg", "mus/bell_ambience.ogg", "mus/berdly_audience.ogg", "mus/berdly_battle_heartbeat_true.ogg", "mus/berdly_chase.ogg", "mus/berdly_descend.ogg", "mus/berdly_flashback.ogg", "mus/berdly_theme.ogg", "mus/bird.ogg", "mus/birds_ch5.ogg", "mus/blue_flower.ogg", "mus/board4_rhythm.ogg", "mus/board_4.ogg", "mus/board_4_challenge.ogg", "mus/board_lancer_dig.ogg", "mus/board_ocean.ogg", "mus/board_sword_music.ogg", "mus/board_zelda.ogg", "mus/boxing_boss.ogg", "mus/boxing_boss_preview.ogg", "mus/boxing_boss_preview_crisp.ogg", "mus/boxing_game.ogg", "mus/bratty_confession.ogg", "mus/card_castle.ogg", "mus/carol_appeared.ogg", "mus/castle_foyer.ogg", "mus/castle_funk_long.ogg", "mus/castle_intro.ogg", "mus/castle_loop.ogg", "mus/castle_top.ogg", "mus/castletown.ogg", "mus/castletown_empty.ogg", "mus/catti_confession.ogg", "mus/ch2_credits.ogg", "mus/ch3-practice_song_combined.ogg", "mus/ch3-practice_song_noguit.ogg", "mus/ch3_board1.ogg", "mus/ch3_board2.ogg", "mus/ch3_board3.ogg", "mus/ch3_karaoke_example_guit_only.ogg", "mus/ch3_karaoke_example_guitar_only_v2.ogg", "mus/ch3_karaoke_example_noguit.ogg", "mus/ch3_karaoke_example_noguitar_v2.ogg", "mus/ch3_karaoke_example_together_ex.ogg", "mus/ch3_karaoke_full.ogg", "mus/ch3_karaoke_no_guitar.ogg", "mus/ch3_karaoke_preview.ogg", "mus/ch3_karaoke_preview_crisp.ogg", "mus/ch3_south_of_the_border.ogg", "mus/ch3_tvtime.ogg", "mus/ch3_tvtime_guitar.ogg", "mus/ch4_battle.ogg", "mus/ch4_credits.ogg", "mus/ch4_extra_boss.ogg", "mus/ch4_first_intro.ogg", "mus/ch4_first_intro_breaking.ogg", "mus/ch5_credits.ogg", "mus/ch5_intro_audio.ogg", "mus/ch5_inversion_lake_chant.ogg", "mus/ch5_weird_monologue.ogg", "mus/ch5_weird_monologue_deep.ogg", "mus/charjoined.ogg", "mus/checkers.ogg", "mus/church_dark_study.ogg", "mus/church_hymn.ogg", "mus/church_lightning.ogg", "mus/church_lw.ogg", "mus/church_lw_night.ogg", "mus/church_wip.ogg", "mus/church_zone2_alt_longer_test.ogg", "mus/church_zone3.ogg", "mus/cliff.ogg", "mus/cliff_jump_ambience.ogg", "mus/cliff_jump_ambience_nowind.ogg", "mus/climb.ogg", "mus/coolbeat.ogg", "mus/cowboy_song.ogg", "mus/creepychase.ogg", "mus/creepydoor.ogg", "mus/creepylandscape.ogg", "mus/cyber.ogg", "mus/cyber_battle.ogg", "mus/cyber_battle_end.ogg", "mus/cyber_battle_prelude.ogg", "mus/cyber_shop.ogg", "mus/cybercity.ogg", "mus/cybercity_alt.ogg", "mus/cybercity_old.ogg", "mus/cyberhouse.ogg", "mus/cybershop_christmas.ogg", "mus/d.ogg", "mus/dark_place.ogg", "mus/darkchurch_intro.ogg", "mus/deep_noise.ogg", "mus/deltarune_logo_ch5_itoki.ogg", "mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg", "mus/dog_balloon.ogg", "mus/dogcheck.ogg", "mus/dogroom.ogg", "mus/dontforget.ogg", "mus/elevator.ogg", "mus/fanfare.ogg", "mus/festival.ogg", "mus/festival_after.ogg", "mus/festival_night.ogg", "mus/field_of_hopes.ogg", "mus/field_of_hopes_insaneintherain_intro.ogg", "mus/field_of_hopes_insaneintherain_loop.ogg", "mus/field_of_hopes_preview.ogg", "mus/field_of_hopes_preview_crisp.ogg", "mus/findher.ogg", "mus/flashback_excerpt.ogg", "mus/flower_cafe.ogg", "mus/flower_castle.ogg", "mus/flowery.ogg", "mus/flowery_diner_romantic.ogg", "mus/flowery_iog.ogg", "mus/flowery_iog_extended.ogg", "mus/flowery_sad.ogg", "mus/flowery_skateboard.ogg", "mus/forest.ogg", "mus/friendship.ogg", "mus/gameover_short.ogg", "mus/gerson_defeated.ogg", "mus/gerson_theme_intro.ogg", "mus/gerson_theme_nointro.ogg", "mus/giant_queen_appears.ogg", "mus/gigaqueen_pre.ogg", "mus/glacier.ogg", "mus/greenroom_detune.ogg", "mus/happy_town.ogg", "mus/heartbeat.ogg", "mus/hip_shop.ogg", "mus/home.ogg", "mus/honksong.ogg", "mus/inappropriate_recycling.ogg", "mus/inukuma_wip.ogg", "mus/jitterbug.ogg", "mus/jitterbug_muffled.ogg", "mus/joker.ogg", "mus/kikky_upgrade.ogg", "mus/kingboss.ogg", "mus/knight.ogg", "mus/knight_appears.ogg", "mus/kris_piano_lancer_waltz.ogg", "mus/kris_piano_last_prophecy.ogg", "mus/kris_piano_lower.ogg", "mus/kris_piano_prophecy.ogg", "mus/kris_piano_quiz.ogg", "mus/kris_piano_rouxls.ogg", "mus/kris_piano_sevenfour.ogg", "mus/kris_piano_shop.ogg", "mus/kris_piano_waitingroom.ogg", "mus/lancer.ogg", "mus/lancer_annoying.ogg", "mus/lancer_susie.ogg", "mus/lancerfight.ogg", "mus/legend.ogg", "mus/legend_altered.ogg", "mus/man.ogg", "mus/man_2.ogg", "mus/man_nes.ogg", "mus/mansion.ogg", "mus/mansion_entrance.ogg", "mus/me.ogg", "mus/meeting_flower.ogg", "mus/meeting_flower_cowboy.ogg", "mus/meeting_flower_orange.ogg", "mus/meeting_flower_orange_highpitch.ogg", "mus/meeting_flower_upbeat_drum.ogg", "mus/menu.ogg", "mus/mike.ogg", "mus/mike_zone.ogg", "mus/miniboss_new_section_idea_wip.ogg", "mus/minigame_kart.ogg", "mus/muffled_rain.ogg", "mus/mus_birdnoise.ogg", "mus/mus_confession.ogg", "mus/mus_date_fight.ogg", "mus/mus_date_tense.ogg", "mus/mus_introcar.ogg", "mus/mus_knightthought.ogg", "mus/mus_race.ogg", "mus/mus_school.ogg", "mus/mus_temloopshort.ogg", "mus/muscle.ogg", "mus/music_guys.ogg", "mus/music_guys_intro.ogg", "mus/napsta_alarm.ogg", "mus/nes_intro_extended_part2.ogg", "mus/newscast.ogg", "mus/night_ambience.ogg", "mus/nightmare_boss_heavy.ogg", "mus/nightmare_boss_links.ogg", "mus/nightmare_nes.ogg", "mus/noelle.ogg", "mus/noelle_distant.ogg", "mus/noelle_ferriswheel.ogg", "mus/noelle_house_wip.ogg", "mus/noelle_normal.ogg", "mus/noelle_school.ogg", "mus/noelleshouseoutside.ogg", "mus/northernlight.ogg", "mus/ocean.ogg", "mus/oldman_helps_out.ogg", "mus/ominous_message.ogg", "mus/ominous_stab_harsh.ogg", "mus/ominous_stab_harsh_2.ogg", "mus/ominous_worse.ogg", "mus/piano_ambience.ogg", "mus/pianpian.ogg", "mus/pink.ogg", "mus/pink_theme.ogg", "mus/pink_theme_mad.ogg", "mus/pirate_zone.ogg", "mus/prejoker.ogg", "mus/pumpkin_boss.ogg", "mus/queen.ogg", "mus/queen_boss.ogg", "mus/queen_car_radio.ogg", "mus/queen_intro.ogg", "mus/quiet_autumn.ogg", "mus/quiet_church.ogg", "mus/rain.ogg", "mus/raining.ogg", "mus/raining_in_church2.ogg", "mus/rakuichi_buster_wip.ogg", "mus/rhythm_3rd_sanctuary_guit.ogg", "mus/rhythm_3rd_sanctuary_noguit.ogg", "mus/rhythm_knockdown_combined.ogg", "mus/rhythm_knockdown_no_guit.ogg", "mus/root_8bit.ogg", "mus/rouxls_battle.ogg", "mus/rtenna_zoom.ogg", "mus/rudebuster_boss.ogg", "mus/running_water.ogg", "mus/ruruskaado.ogg", "mus/s_neo.ogg", "mus/s_neo_clip.ogg", "mus/sadchord2.ogg", "mus/second_church.ogg", "mus/shinkansen.ogg", "mus/shop1.ogg", "mus/shop_3.ogg", "mus/silly_printer.ogg", "mus/sinedrone_danger.ogg", "mus/sinedrone_danger_high.ogg", "mus/sink_noise.ogg", "mus/smallpiano_room.ogg", "mus/sound_battle_bg.ogg", "mus/spamton_basement.ogg", "mus/spamton_battle.ogg", "mus/spamton_dance.ogg", "mus/spamton_happy.ogg", "mus/spamton_house.ogg", "mus/spamton_laugh_noise.ogg", "mus/spamton_meeting.ogg", "mus/spamton_meeting_intro.ogg", "mus/spamton_neo_after.ogg", "mus/spamton_neo_meeting.ogg", "mus/spamton_neo_mix_ex_wip.ogg", "mus/static_placeholder.ogg", "mus/statue2_level1.ogg", "mus/statue2_level2.ogg", "mus/statue2_level3.ogg", "mus/statue2_level4.ogg", "mus/statue2_level5.ogg", "mus/statue_chord_basic.ogg", "mus/statue_level1.ogg", "mus/statue_level2.ogg", "mus/statue_level3.ogg", "mus/statue_level4.ogg", "mus/stealth.ogg", "mus/strongwind_loop.ogg", "mus/susie_diner.ogg", "mus/tenna_battle.ogg", "mus/tenna_battle_guitar.ogg", "mus/tenna_battle_old.ogg", "mus/tenna_battle_preview.ogg", "mus/tenna_battle_preview_crisp.ogg", "mus/tenna_island.ogg", "mus/tense.ogg", "mus/the_dark_truth.ogg", "mus/thrash_rating.ogg", "mus/thrashmachine.ogg", "mus/tin_night.ogg", "mus/tinnitus.ogg", "mus/titan_battle.ogg", "mus/titan_pre.ogg", "mus/titan_spawn.ogg", "mus/titan_tower.ogg", "mus/town.ogg", "mus/town_day.ogg", "mus/trank.ogg", "mus/tv_changingroom.ogg", "mus/tv_hall_of_fame.ogg", "mus/tv_infrontof.ogg", "mus/tv_noise.ogg", "mus/tv_results_screen.ogg", "mus/tv_static_bad.ogg", "mus/tv_world.ogg", "mus/tvromance.ogg", "mus/vs_susie.ogg", "mus/w.ogg", "mus/wet_tapdancing.ogg", "mus/wet_tapdancing2.ogg", "mus/wet_tapdancing_failed.ogg", "mus/wind.ogg", "mus/wind_highplace.ogg" ].join(";");
+            }
+            
+            function onFirstFrameRendered() {}
+            
+            function onGameSetWindowSize(width, height) {
+                if (startingHeight === undefined && startingWidth === undefined) {
+                    console.log("Initial window size set to width: " + width + ", height: " + height);
+                    startingHeight = height;
+                    startingWidth = width;
+                    startingAspect = startingWidth / startingHeight;
+                }
+            }
+            
+            function ensureAspectRatio() {
+                if (canvasElement === undefined || !CHANGE_ASPECT_RATIO || startingHeight === undefined || startingWidth === undefined) {
+                    return;
+                }
+                canvasElement.classList.add("active");
+                const maxWidth = window.innerWidth;
+                const maxHeight = window.innerHeight;
+                var newHeight, newWidth;
+                var heightQuotient = startingHeight / maxHeight;
+                var widthQuotient = startingWidth / maxWidth;
+                if (heightQuotient > widthQuotient) {
+                    newHeight = maxHeight;
+                    newWidth = newHeight * startingAspect;
+                } else {
+                    newWidth = maxWidth;
+                    newHeight = newWidth / startingAspect;
+                }
+                canvasElement.style.height = newHeight + "px";
+                canvasElement.style.width = newWidth + "px";
+                canvasElement.style.position = "absolute";
+                canvasElement.style.left = "50%";
+                canvasElement.style.top = "50%";
+                canvasElement.style.transform = "translate(-50%, -50%)";
+            }
+            
+            function quitIfSupported() {
+                if (window.oprt && window.oprt.closeTab) {
+                    window.oprt.closeTab();
+                } else if (window.chrome && window.chrome.runtime && window.chrome.runtime.sendMessage) {
+                    window.chrome.runtime.sendMessage('mpojjmidmnpcpopbebmecmjdkdbgdeke', {
+                        command: 'closeTab'
+                    });
+                }
+            }
+            
+            function enterFullscreenIfSupported() {
+                if (!window.oprt || !window.oprt.enterFullscreen) {
+                    return;
+                }
+                window.oprt.enterFullscreen();
+                let viewStatus = GM_get_view_status();
+                viewStatus.fullscreen = true;
+                GM_set_view_status(viewStatus);
+            }
+            
+            function lockOrientationIfSupported() {
+                if (!window.oprt || !window.oprt.lockPortraitOrientation || !window.oprt.lockLandscapeOrientation) {
+                    return;
+                }
+                let viewStatus = GM_get_view_status();
+                if (viewStatus.landscape === true && viewStatus.portrait === false) {
+                    window.oprt.lockPortraitOrientation();
+                } else if (viewStatus.landscape === false && viewStatus.portrait === true) {
+                    window.oprt.lockPortraitOrientation();
+                }
+            }
+            const resizeObserver = new ResizeObserver(() => {
+                window.requestAnimationFrame(ensureAspectRatio);
+                setTimeout(() => window.requestAnimationFrame(ensureAspectRatio), 100);
+            });
+            resizeObserver.observe(document.body);
+            if (/Android|iPhone|iPod/i.test(navigator.userAgent)) {
+                bodyElement.className = "scrollingDisabled";
+                outputContainerElement.hidden = true;
+            }
+            document.addEventListener("visibilitychange", (event) => {
+                if (document.visibilityState != "visible") {}
+            });
+            window.addEventListener("load", (event) => {
+                if ((!window.oprt || !window.oprt.enterFullscreen) && (!window.chrome || !window.chrome.runtime || !window.chrome.runtime.sendMessage)) {}
+            });
+            setWadLoadCallback(() => {
+                enterFullscreenIfSupported();
+                lockOrientationIfSupported();
+            });
+        </script>
+        
+        <script type="text/javascript">
+            // Define the paths to your whole files.
+            const deltaruneArchives = {"0":["game.unx.part001"],"1":["chapter1.unx.part001"],"2":["chapter2.unx.part001","chapter2.unx.part002","chapter2.unx.part003"],"3":["chapter3.unx.part001","chapter3.unx.part002","chapter3.unx.part003","chapter3.unx.part004","chapter3.unx.part005"],"4":["chapter4.unx.part001","chapter4.unx.part002","chapter4.unx.part003","chapter4.unx.part004","chapter4.unx.part005"],"5":["chapter5.unx.part001","chapter5.unx.part002","chapter5.unx.part003","chapter5.unx.part004","chapter5.unx.part005","chapter5.unx.part006"]};
+const deltaruneManifestFiles = {"0":["mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"],"1":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_en.json","lang/lang_ja.json","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_great_shine.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_usefountain.ogg","mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"],"2":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_power","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"],"3":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","vid/tennaIntroF1_compressed_28.mp4","vid/tennaIntroJPf1_compressed_28.mp4","mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"],"4":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","mus_undynescary.ogg","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"],"5":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","execute_program_pipe_x64.dll","lang/lang_ja.json","shader_replace_simple_x64.dll","snd_bigcar_yelp.ogg","snd_churchbell.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","vid/ch5_intro_en.mp4","vid/ch5_intro_jp.mp4","mus/4rd_sanctuary.ogg","mus/4rd_sanctuary_noguit.ogg","mus/AUDIO_ANOTHERHIM.ogg","mus/AUDIO_DARKNESS.ogg","mus/AUDIO_DEFEAT.ogg","mus/AUDIO_DRONE.ogg","mus/AUDIO_STORY.ogg","mus/Flowerman_Arrangement.ogg","mus/GALLERY.ogg","mus/KEYGEN.ogg","mus/THE_HOLY.ogg","mus/TV_GAME.ogg","mus/acid_tunnel.ogg","mus/afterrain_inside.ogg","mus/alarm_titlescreen.ogg","mus/alley_ambience.ogg","mus/alt_church_lobby.ogg","mus/ambientwater_weird.ogg","mus/annoying_prophecy.ogg","mus/april_2012.ogg","mus/asgore_conspiracy.ogg","mus/asgore_serious.ogg","mus/asgore_serious_drum_only_flowery_version.ogg","mus/asgore_serious_drum_only_low.ogg","mus/baci_distort.ogg","mus/baci_perugina.ogg","mus/basement.ogg","mus/battle.ogg","mus/battle_preview.ogg","mus/battle_preview_crisp.ogg","mus/battle_vapor.ogg","mus/bell_ambience.ogg","mus/berdly_audience.ogg","mus/berdly_battle_heartbeat_true.ogg","mus/berdly_chase.ogg","mus/berdly_descend.ogg","mus/berdly_flashback.ogg","mus/berdly_theme.ogg","mus/bird.ogg","mus/birds_ch5.ogg","mus/blue_flower.ogg","mus/board4_rhythm.ogg","mus/board_4.ogg","mus/board_4_challenge.ogg","mus/board_lancer_dig.ogg","mus/board_ocean.ogg","mus/board_sword_music.ogg","mus/board_zelda.ogg","mus/boxing_boss.ogg","mus/boxing_boss_preview.ogg","mus/boxing_boss_preview_crisp.ogg","mus/boxing_game.ogg","mus/bratty_confession.ogg","mus/card_castle.ogg","mus/carol_appeared.ogg","mus/castle_foyer.ogg","mus/castle_funk_long.ogg","mus/castle_intro.ogg","mus/castle_loop.ogg","mus/castle_top.ogg","mus/castletown.ogg","mus/castletown_empty.ogg","mus/catti_confession.ogg","mus/ch2_credits.ogg","mus/ch3-practice_song_combined.ogg","mus/ch3-practice_song_noguit.ogg","mus/ch3_board1.ogg","mus/ch3_board2.ogg","mus/ch3_board3.ogg","mus/ch3_karaoke_example_guit_only.ogg","mus/ch3_karaoke_example_guitar_only_v2.ogg","mus/ch3_karaoke_example_noguit.ogg","mus/ch3_karaoke_example_noguitar_v2.ogg","mus/ch3_karaoke_example_together_ex.ogg","mus/ch3_karaoke_full.ogg","mus/ch3_karaoke_no_guitar.ogg","mus/ch3_karaoke_preview.ogg","mus/ch3_karaoke_preview_crisp.ogg","mus/ch3_south_of_the_border.ogg","mus/ch3_tvtime.ogg","mus/ch3_tvtime_guitar.ogg","mus/ch4_battle.ogg","mus/ch4_credits.ogg","mus/ch4_extra_boss.ogg","mus/ch4_first_intro.ogg","mus/ch4_first_intro_breaking.ogg","mus/ch5_credits.ogg","mus/ch5_intro_audio.ogg","mus/ch5_inversion_lake_chant.ogg","mus/ch5_weird_monologue.ogg","mus/ch5_weird_monologue_deep.ogg","mus/charjoined.ogg","mus/checkers.ogg","mus/church_dark_study.ogg","mus/church_hymn.ogg","mus/church_lightning.ogg","mus/church_lw.ogg","mus/church_lw_night.ogg","mus/church_wip.ogg","mus/church_zone2_alt_longer_test.ogg","mus/church_zone3.ogg","mus/cliff.ogg","mus/cliff_jump_ambience.ogg","mus/cliff_jump_ambience_nowind.ogg","mus/climb.ogg","mus/coolbeat.ogg","mus/cowboy_song.ogg","mus/creepychase.ogg","mus/creepydoor.ogg","mus/creepylandscape.ogg","mus/cyber.ogg","mus/cyber_battle.ogg","mus/cyber_battle_end.ogg","mus/cyber_battle_prelude.ogg","mus/cyber_shop.ogg","mus/cybercity.ogg","mus/cybercity_alt.ogg","mus/cybercity_old.ogg","mus/cyberhouse.ogg","mus/cybershop_christmas.ogg","mus/d.ogg","mus/dark_place.ogg","mus/darkchurch_intro.ogg","mus/deep_noise.ogg","mus/deltarune_logo_ch5_itoki.ogg","mus/deltarune_piano_collections_by_trevor_alan_gomes.ogg","mus/dog_balloon.ogg","mus/dogcheck.ogg","mus/dogroom.ogg","mus/dontforget.ogg","mus/elevator.ogg","mus/fanfare.ogg","mus/festival.ogg","mus/festival_after.ogg","mus/festival_night.ogg","mus/field_of_hopes.ogg","mus/field_of_hopes_insaneintherain_intro.ogg","mus/field_of_hopes_insaneintherain_loop.ogg","mus/field_of_hopes_preview.ogg","mus/field_of_hopes_preview_crisp.ogg","mus/findher.ogg","mus/flashback_excerpt.ogg","mus/flower_cafe.ogg","mus/flower_castle.ogg","mus/flowery.ogg","mus/flowery_diner_romantic.ogg","mus/flowery_iog.ogg","mus/flowery_iog_extended.ogg","mus/flowery_sad.ogg","mus/flowery_skateboard.ogg","mus/forest.ogg","mus/friendship.ogg","mus/gameover_short.ogg","mus/gerson_defeated.ogg","mus/gerson_theme_intro.ogg","mus/gerson_theme_nointro.ogg","mus/giant_queen_appears.ogg","mus/gigaqueen_pre.ogg","mus/glacier.ogg","mus/greenroom_detune.ogg","mus/happy_town.ogg","mus/heartbeat.ogg","mus/hip_shop.ogg","mus/home.ogg","mus/honksong.ogg","mus/inappropriate_recycling.ogg","mus/inukuma_wip.ogg","mus/jitterbug.ogg","mus/jitterbug_muffled.ogg","mus/joker.ogg","mus/kikky_upgrade.ogg","mus/kingboss.ogg","mus/knight.ogg","mus/knight_appears.ogg","mus/kris_piano_lancer_waltz.ogg","mus/kris_piano_last_prophecy.ogg","mus/kris_piano_lower.ogg","mus/kris_piano_prophecy.ogg","mus/kris_piano_quiz.ogg","mus/kris_piano_rouxls.ogg","mus/kris_piano_sevenfour.ogg","mus/kris_piano_shop.ogg","mus/kris_piano_waitingroom.ogg","mus/lancer.ogg","mus/lancer_annoying.ogg","mus/lancer_susie.ogg","mus/lancerfight.ogg","mus/legend.ogg","mus/legend_altered.ogg","mus/man.ogg","mus/man_2.ogg","mus/man_nes.ogg","mus/mansion.ogg","mus/mansion_entrance.ogg","mus/me.ogg","mus/meeting_flower.ogg","mus/meeting_flower_cowboy.ogg","mus/meeting_flower_orange.ogg","mus/meeting_flower_orange_highpitch.ogg","mus/meeting_flower_upbeat_drum.ogg","mus/menu.ogg","mus/mike.ogg","mus/mike_zone.ogg","mus/miniboss_new_section_idea_wip.ogg","mus/minigame_kart.ogg","mus/muffled_rain.ogg","mus/mus_birdnoise.ogg","mus/mus_confession.ogg","mus/mus_date_fight.ogg","mus/mus_date_tense.ogg","mus/mus_introcar.ogg","mus/mus_knightthought.ogg","mus/mus_race.ogg","mus/mus_school.ogg","mus/mus_temloopshort.ogg","mus/muscle.ogg","mus/music_guys.ogg","mus/music_guys_intro.ogg","mus/napsta_alarm.ogg","mus/nes_intro_extended_part2.ogg","mus/newscast.ogg","mus/night_ambience.ogg","mus/nightmare_boss_heavy.ogg","mus/nightmare_boss_links.ogg","mus/nightmare_nes.ogg","mus/noelle.ogg","mus/noelle_distant.ogg","mus/noelle_ferriswheel.ogg","mus/noelle_house_wip.ogg","mus/noelle_normal.ogg","mus/noelle_school.ogg","mus/noelleshouseoutside.ogg","mus/northernlight.ogg","mus/ocean.ogg","mus/oldman_helps_out.ogg","mus/ominous_message.ogg","mus/ominous_stab_harsh.ogg","mus/ominous_stab_harsh_2.ogg","mus/ominous_worse.ogg","mus/piano_ambience.ogg","mus/pianpian.ogg","mus/pink.ogg","mus/pink_theme.ogg","mus/pink_theme_mad.ogg","mus/pirate_zone.ogg","mus/prejoker.ogg","mus/pumpkin_boss.ogg","mus/queen.ogg","mus/queen_boss.ogg","mus/queen_car_radio.ogg","mus/queen_intro.ogg","mus/quiet_autumn.ogg","mus/quiet_church.ogg","mus/rain.ogg","mus/raining.ogg","mus/raining_in_church2.ogg","mus/rakuichi_buster_wip.ogg","mus/rhythm_3rd_sanctuary_guit.ogg","mus/rhythm_3rd_sanctuary_noguit.ogg","mus/rhythm_knockdown_combined.ogg","mus/rhythm_knockdown_no_guit.ogg","mus/root_8bit.ogg","mus/rouxls_battle.ogg","mus/rtenna_zoom.ogg","mus/rudebuster_boss.ogg","mus/running_water.ogg","mus/ruruskaado.ogg","mus/s_neo.ogg","mus/s_neo_clip.ogg","mus/sadchord2.ogg","mus/second_church.ogg","mus/shinkansen.ogg","mus/shop1.ogg","mus/shop_3.ogg","mus/silly_printer.ogg","mus/sinedrone_danger.ogg","mus/sinedrone_danger_high.ogg","mus/sink_noise.ogg","mus/smallpiano_room.ogg","mus/sound_battle_bg.ogg","mus/spamton_basement.ogg","mus/spamton_battle.ogg","mus/spamton_dance.ogg","mus/spamton_happy.ogg","mus/spamton_house.ogg","mus/spamton_laugh_noise.ogg","mus/spamton_meeting.ogg","mus/spamton_meeting_intro.ogg","mus/spamton_neo_after.ogg","mus/spamton_neo_meeting.ogg","mus/spamton_neo_mix_ex_wip.ogg","mus/static_placeholder.ogg","mus/statue2_level1.ogg","mus/statue2_level2.ogg","mus/statue2_level3.ogg","mus/statue2_level4.ogg","mus/statue2_level5.ogg","mus/statue_chord_basic.ogg","mus/statue_level1.ogg","mus/statue_level2.ogg","mus/statue_level3.ogg","mus/statue_level4.ogg","mus/stealth.ogg","mus/strongwind_loop.ogg","mus/susie_diner.ogg","mus/tenna_battle.ogg","mus/tenna_battle_guitar.ogg","mus/tenna_battle_old.ogg","mus/tenna_battle_preview.ogg","mus/tenna_battle_preview_crisp.ogg","mus/tenna_island.ogg","mus/tense.ogg","mus/the_dark_truth.ogg","mus/thrash_rating.ogg","mus/thrashmachine.ogg","mus/tin_night.ogg","mus/tinnitus.ogg","mus/titan_battle.ogg","mus/titan_pre.ogg","mus/titan_spawn.ogg","mus/titan_tower.ogg","mus/town.ogg","mus/town_day.ogg","mus/trank.ogg","mus/tv_changingroom.ogg","mus/tv_hall_of_fame.ogg","mus/tv_infrontof.ogg","mus/tv_noise.ogg","mus/tv_results_screen.ogg","mus/tv_static_bad.ogg","mus/tv_world.ogg","mus/tvromance.ogg","mus/vs_susie.ogg","mus/w.ogg","mus/wet_tapdancing.ogg","mus/wet_tapdancing2.ogg","mus/wet_tapdancing_failed.ogg","mus/wind.ogg","mus/wind_highplace.ogg"]};
+const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_en.json","lang/lang_ja.json","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_great_shine.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_usefountain.ogg"],"2":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_power","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg"],"3":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","vid/tennaIntroF1_compressed_28.mp4","vid/tennaIntroJPf1_compressed_28.mp4"],"4":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","lang/lang_ja.json","mus_undynescary.ogg","snd_bigcar_yelp.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg"],"5":["AUDIO_INTRONOISE.ogg","audiogroup1.dat","execute_program_pipe_x64.dll","lang/lang_ja.json","shader_replace_simple_x64.dll","snd_bigcar_yelp.ogg","snd_churchbell.ogg","snd_closet_fall.ogg","snd_closet_impact.ogg","snd_dtrans_drone.ogg","snd_dtrans_flip.ogg","snd_dtrans_heavypassing.ogg","snd_dtrans_lw.ogg","snd_dtrans_square.ogg","snd_dtrans_twinkle.ogg","snd_fountain_make.ogg","snd_fountain_target.ogg","snd_ghostappear.ogg","snd_great_shine.ogg","snd_him_quick.ogg","snd_hitcar.ogg","snd_hitcar_little.ogg","snd_icespell.ogg","snd_paper_rumble.ogg","snd_paper_surf.ogg","snd_revival.ogg","snd_rurus_appear.ogg","snd_smallcar_yelp.ogg","snd_snowgrave.ogg","snd_spell_pacify.ogg","snd_usefountain.ogg","vid/ch5_intro_en.mp4","vid/ch5_intro_jp.mp4"]};
+const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
+const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
+window.GM_GAME_ARCHIVE_CHUNKS = deltaruneArchives[activeDeltaruneChapter];
+window.GM_GAME_ARCHIVE = window.GM_GAME_ARCHIVE_CHUNKS[0];
+window.GM_RUNNER_DATA = `runner${activeDeltaruneChapter}.data`;
+window.GM_RUNNER_SCRIPT = `runner${activeDeltaruneChapter}.js`;
+window.GM_EXTERNAL_FILES = deltaruneManifestFiles[activeDeltaruneChapter];
+window.GM_CHAPTER_ASSET_PREFIX = activeDeltaruneChapter === "0" ? "" : `chapter${activeDeltaruneChapter}_windows`;
+window.GM_CHAPTER_EXTERNAL_FILES = deltaruneChapterExternalFiles[activeDeltaruneChapter];
+if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapter; loading chapter select.", requestedChapter);
+            if (window.DRLoading) DRLoading.init(
+                activeDeltaruneChapter === "0" ? "CHAPTER SELECT" : "CHAPTER " + activeDeltaruneChapter,
+                activeDeltaruneChapter === "0" ? "" : (DR_CHAPTER_NAMES[activeDeltaruneChapter] || ""),
+                hardModeActive);
+            let gameUnxUrl = window.GM_GAME_ARCHIVE || 'game.unx';
+            const gameArchiveChunks = window.GM_GAME_ARCHIVE_CHUNKS || [gameUnxUrl];
+            const runnerDataUrl = window.GM_RUNNER_DATA || 'runner.data';
+            const runnerScriptUrl = window.GM_RUNNER_SCRIPT || 'runner.js';
+            const chapterAssetPrefix = window.GM_CHAPTER_ASSET_PREFIX || '';
+            const chapterExternalFiles = window.GM_CHAPTER_EXTERNAL_FILES || [];
+
+            function resolveChapterAssetUrl(url) {
+                if (!chapterAssetPrefix || typeof url !== 'string') return url;
+                const queryIndex = url.search(/[?#]/);
+                const path = (queryIndex === -1 ? url : url.slice(0, queryIndex))
+                    .replace(/^\.\//, '')
+                    .replace(/^\//, '');
+                if (!chapterExternalFiles.includes(path)) return url;
+                const suffix = queryIndex === -1 ? '' : url.slice(queryIndex);
+                return `${chapterAssetPrefix}/${path}${suffix}`;
+            }
+            
+            // --- Interception Logic ---
+            // Intercept 'fetch' requests
+            const originalFetch = window.fetch;
+            window.fetch = async function (url, ...args) {
+                if (url.endsWith("game.unx")) {
+                    return originalFetch(gameUnxUrl, ...args);
+                } else if (url.endsWith("runner.data")) {
+                    return originalFetch(runnerDataUrl, ...args);
+                }
+                return originalFetch(resolveChapterAssetUrl(url), ...args);
+            };
+            
+            // Intercept 'XMLHttpRequest' requests
+            const originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                let newUrl = url;
+                if (url.endsWith("game.unx")) {
+                    newUrl = gameUnxUrl;
+                } else if (url.endsWith("runner.data")) {
+                    newUrl = runnerDataUrl;
+                } else {
+                    newUrl = resolveChapterAssetUrl(url);
+                }
+                return originalOpen.call(this, method, newUrl, ...rest);
+            };
+            
+            async function startRunner() {
+                if (window.DRLoading) DRLoading.stage("LOADING DATA");
+                let archiveTotal = 0;
+                const archiveParts = await Promise.all(gameArchiveChunks.map(async (chunkUrl) => {
+                    const response = await originalFetch(chunkUrl);
+                    if (!response.ok) throw new Error(`Unable to load archive chunk: ${chunkUrl}`);
+                    const lenHeader = +(response.headers.get('Content-Length') || 0);
+                    if (lenHeader) { archiveTotal += lenHeader; if (window.DRLoading) DRLoading.setArchiveTotals(archiveTotal); }
+                    if (!response.body || !window.DRLoading) return response.arrayBuffer();
+                    // stream the chunk so the SOUL fills up with real progress
+                    const reader = response.body.getReader();
+                    const parts = [];
+                    for (;;) {
+                        const r = await reader.read();
+                        if (r.done) break;
+                        parts.push(r.value);
+                        DRLoading.addLoaded(r.value.byteLength);
+                    }
+                    const size = parts.reduce((s, c) => s + c.byteLength, 0);
+                    const out = new Uint8Array(size);
+                    let p = 0;
+                    for (const c of parts) { out.set(c, p); p += c.byteLength; }
+                    return out.buffer;
+                }));
+                if (hardModeActive && window.HARD_MODE_PATCHES[activeDeltaruneChapter]) {
+                    if (window.DRLoading) DRLoading.stage("APPLYING HARD MODE");
+                    const totalLen = archiveParts.reduce((s, b) => s + b.byteLength, 0);
+                    const bytes = new Uint8Array(totalLen);
+                    let pos = 0;
+                    for (const part of archiveParts) { bytes.set(new Uint8Array(part), pos); pos += part.byteLength; }
+                    for (const [off, val] of window.HARD_MODE_PATCHES[activeDeltaruneChapter]) bytes[off] = val;
+                    gameUnxUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+                    await new Promise((r) => setTimeout(r, 400));
+                    console.log("HARD MODE active: you take 2x damage, enemy attacks run 1.2x as fast.");
+                } else {
+                    gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
+                }
+
+                if (window.DRLoading) DRLoading.stage("LOADING ENGINE");
+                const runnerScript = document.createElement("script");
+                runnerScript.src = runnerScriptUrl;
+                document.body.appendChild(runnerScript);
+                console.log("File interception is active. Starting the game...");
+            }
+
+            startRunner().catch((error) => {
+                console.error("Unable to prepare game archive:", error);
+                Module.setStatus("Unable to load game archive.");
+                if (window.DRLoading) DRLoading.fail("DOWNLOAD FAILED");
+            });
+        </script>
+        
+        <script>
+            window.DeltaruneSaveManager = (function() {
+                function showMessageBox(message, onConfirm = null) {
+                    const messageBox = document.getElementById('customMessageBox');
+                    const messageBoxText = document.getElementById('messageBoxText');
+                    const messageBoxConfirmBtn = document.getElementById('messageBoxConfirmBtn');
+                    const messageBoxCancelBtn = document.getElementById('messageBoxCancelBtn');
+                    messageBoxText.textContent = message;
+                    messageBoxConfirmBtn.textContent = 'Alright!';
+                    if (messageBoxCancelBtn) {
+                        messageBoxCancelBtn.style.display = 'none';
+                    }
+                    messageBox.style.display = 'flex';
+                    messageBoxConfirmBtn.onclick = () => {
+                        messageBox.style.display = 'none';
+                        if (onConfirm) onConfirm();
+                    };
+                }
+                
+                function confirmBox(message) {
+                    return new Promise((resolve) => {
+                        const messageBox = document.getElementById('customMessageBox');
+                        const messageBoxText = document.getElementById('messageBoxText');
+                        const messageBoxConfirmBtn = document.getElementById('messageBoxConfirmBtn');
+                        let messageBoxCancelBtn = document.getElementById('messageBoxCancelBtn');
+                        if (!messageBoxCancelBtn) {
+                            messageBoxCancelBtn = document.createElement('button');
+                            messageBoxCancelBtn.id = 'messageBoxCancelBtn';
+                            messageBoxCancelBtn.style.backgroundColor = '#6c757d';
+                            messageBoxCancelBtn.style.marginLeft = '10px';
+                            messageBoxConfirmBtn.parentNode.appendChild(messageBoxCancelBtn);
+                        }
+                        messageBoxText.textContent = message;
+                        messageBoxConfirmBtn.textContent = 'Sure!';
+                        messageBoxCancelBtn.textContent = 'Nah.';
+                        messageBoxCancelBtn.style.display = 'inline-block';
+                        messageBox.style.display = 'flex';
+                        messageBoxConfirmBtn.onclick = () => {
+                            messageBox.style.display = 'none';
+                            resolve(true);
+                        };
+                        messageBoxCancelBtn.onclick = () => {
+                            messageBox.style.display = 'none';
+                            resolve(false);
+                        };
+                    });
+                }
+                const DB_NAME = '/_savedata';
+                const STORE_NAME = 'FILE_DATA';
+                const DB_VERSION = 21;
+                let db;
+                async function openIndexedDB() {
+                    if (db) return db;
+                    if (!window.indexedDB) {
+                        showMessageBox("Your browser doesn't support IndexedDB. Save manager will not work.");
+                        throw new Error("IndexedDB not supported.");
+                    }
+                    return new Promise((resolve, reject) => {
+                        const request = indexedDB.open(DB_NAME, DB_VERSION);
+                        request.onerror = (event) => {
+                            //console.error("IndexedDB error:", event.target.error);
+                            //showMessageBox("Error opening IndexedDB: " + (event.target.error ? event.target.error.message : "Unknown error"));
+                            reject("Error opening IndexedDB.");
+                        };
+                        request.onsuccess = (event) => {
+                            db = event.target.result;
+                            db.onversionchange = () => {
+                                try { db.close(); } catch (e) {}
+                                db = null;
+                            };
+                            console.log("IndexedDB opened successfully.");
+                            resolve(db);
+                        };
+                        request.onupgradeneeded = (event) => {
+                            db = event.target.result;
+                            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                                db.createObjectStore(STORE_NAME);
+                                console.log(`Object store '${STORE_NAME}' created.`);
+                            }
+                        };
+                    });
+                }
+                async function getSaveFiles() {
+                    try {
+                        await openIndexedDB();
+                        const transaction = db.transaction([STORE_NAME], 'readonly');
+                        const objectStore = transaction.objectStore(STORE_NAME);
+                        const request = objectStore.getAll();
+                        return new Promise((resolve, reject) => {
+                            request.onsuccess = (event) => {
+                                const files = event.target.result;
+                                const fileNamesRequest = objectStore.getAllKeys();
+                                fileNamesRequest.onsuccess = (eventKeys) => {
+                                    const fileNames = eventKeys.target.result;
+                                    const result = files.map((file, index) => ({
+                                        name: fileNames[index],
+                                        data: file
+                                    }));
+                                    resolve(result);
+                                };
+                                fileNamesRequest.onerror = (eventKeys) => {
+                                    console.error("Error getting file names:", eventKeys.target.error);
+                                    reject("Error getting file names: " + (eventKeys.target.error ? eventKeys.target.error.message : "Unknown error"));
+                                };
+                            };
+                            request.onerror = (event) => {
+                                console.error("Error getting save files from object store:", event.target.error);
+                                reject("Error getting save files: " + (event.target.error ? event.target.error.message : "Unknown error"));
+                            };
+                        });
+                    } catch (error) {
+                        console.error("Error in getSaveFiles:", error);
+                        showMessageBox("Failed to retrieve save files: " + error.message);
+                        return [];
+                    }
+                }
+                async function displaySaveFiles() {
+                    const saveFileListDiv = document.getElementById('saveFileList');
+                    saveFileListDiv.innerHTML = '';
+                    try {
+                        const files = await getSaveFiles();
+                        if (files.length === 0) {
+                            saveFileListDiv.innerHTML = 'No saves found. Try importing one or saving in-game first.';
+                            return;
+                        }
+                        files.forEach(fileEntry => {
+                            const fileName = fileEntry.name;
+                            const fileData = fileEntry.data;
+                            const itemDiv = document.createElement('div');
+                            itemDiv.classList.add('save-file-item');
+                            const infoDiv = document.createElement('div');
+                            infoDiv.classList.add('save-file-info');
+                            const timestamp = fileData.timestamp ? new Date(fileData.timestamp).toLocaleString() : 'N/A';
+                            const size = fileData.contents ? fileData.contents.byteLength : 0;
+                            infoDiv.innerHTML = `
+                      
+                          
+                          
+                                      <span>
+                                          <strong>File:</strong> ${fileName}
+                          
+                          
+                                      </span>
+                                      <span>
+                                          <strong>Last Modified:</strong> ${timestamp}
+                          
+                          
+                                      </span>
+                                      <span>
+                                          <strong>Size:</strong> ${size} bytes
+                          
+                          
+                                      </span>
+                    `;
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.classList.add('save-file-actions');
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.onclick = () => downloadSaveFile(fileName, fileData.contents);
+                    actionsDiv.appendChild(downloadBtn);
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.classList.add('delete-btn');
+                    deleteBtn.onclick = async () => {
+                        const confirmed = await confirmBox(`Are you sure you want to delete "${fileName}"?`);
+                        if (confirmed) {
+                            await deleteSaveFile(fileName);
+                        }
+                    };
+                    actionsDiv.appendChild(deleteBtn);
+                    itemDiv.appendChild(infoDiv);
+                    itemDiv.appendChild(actionsDiv);
+                    saveFileListDiv.appendChild(itemDiv);
+                        });
+                    } catch (error) {
+                        console.error("Error displaying save files:", error);
+                        saveFileListDiv.innerHTML = `
+                                      
+                                      
+                                      <p style="text-align: center; color: #FA1E4E;">Error loading files: ${error.message}</p>`;
+                    }
+                }
+                
+                function downloadSaveFile(fileName, contents) {
+                    if (!contents) {
+                        showMessageBox("No content to download for this file.");
+                        return;
+                    }
+                    const blob = new Blob([contents], {
+                        type: 'application/octet-stream'
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessageBox(`File "${fileName}" downloaded.`);
+                }
+                async function deleteSaveFile(fileName) {
+                    try {
+                        await openIndexedDB();
+                        const transaction = db.transaction([STORE_NAME], 'readwrite');
+                        const objectStore = transaction.objectStore(STORE_NAME);
+                        const request = objectStore.delete(fileName);
+                        return new Promise((resolve, reject) => {
+                            request.onsuccess = () => {
+                                showMessageBox(`File "${fileName}" deleted successfully.`);
+                                displaySaveFiles();
+                                resolve();
+                            };
+                            request.onerror = (event) => {
+                                console.error("Error deleting file:", event.target.error);
+                                showMessageBox(`Error deleting file "${fileName}": ` + (event.target.error ? event.target.error.message : "Unknown error"));
+                                reject("Error deleting file.");
+                            };
+                        });
+                    } catch (error) {
+                        console.error("Error in deleteSaveFile:", error);
+                        showMessageBox("Failed to delete save file: " + error.message);
+                    }
+                }
+                async function handleUpload() {
+                    const uploadFileInput = document.getElementById('uploadFileInput');
+                    const uploadFileNameInput = document.getElementById('uploadFileNameInput');
+                    const files = uploadFileInput.files;
+                    if (files.length === 0) {
+                        showMessageBox("Please select at least one file to upload.");
+                        return;
+                    }
+                    try {
+                        const uploadPromises = [];
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            let fileName = (files.length === 1 && uploadFileNameInput.value.trim())
+                            ? uploadFileNameInput.value.trim()
+                            : file.name;
+                            fileName = fileName.replace(/^_savedata\//, '');
+                            fileName = fileName.replace(/^\//, '');
+                            if (!fileName) {
+                                showMessageBox(`Invalid file name for "${file.name}" after processing. Skipping.`);
+                                continue;
+                            }
+                            const arrayBuffer = await file.arrayBuffer();
+                            const uint8ArrayContents = new Uint8Array(arrayBuffer);
+                            const saveObject = {
+                                timestamp: new Date(),
+                                mode: 33206,
+                                contents: uint8ArrayContents
+                            };
+                            const finalFileName = `/_savedata/${fileName}`;
+                            uploadPromises.push(saveSaveFile(finalFileName, saveObject));
+                        }
+                        await Promise.all(uploadPromises);
+                        showMessageBox(`${files.length} file(s) uploaded and saved successfully.`);
+                        uploadFileInput.value = '';
+                        uploadFileNameInput.value = '';
+                        displaySaveFiles();
+                    } catch (error) {
+                        console.error("Error uploading file(s):", error);
+                        showMessageBox("Failed to upload one or more files: " + error.message);
+                    }
+                }
+                async function exportAllToZip() {
+                    try {
+                        const files = await getSaveFiles();
+                        if (files.length === 0) {
+                            showMessageBox("No save files to export.");
+                            return;
+                        }
+                        const zip = new JSZip();
+                        files.forEach(fileEntry => {
+                            const fileName = fileEntry.name.replace(/^\/_savedata\//, ''); // Clean up name for ZIP
+                            const contents = fileEntry.data.contents;
+                            if (contents) {
+                                const zipContents = (contents instanceof Int8Array)
+                                ? new Uint8Array(contents.buffer)  // Convert if old Int8Array
+                                : contents;  // Already Uint8Array or compatible
+                                zip.file(fileName, zipContents);
+                            }
+                        });
+                        const zipBlob = await zip.generateAsync({ type: 'blob' });
+                        const url = URL.createObjectURL(zipBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'deltarune_saves.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        showMessageBox("All save files exported to deltarune_saves.zip.");
+                    } catch (error) {
+                        console.error("Error exporting to ZIP:", error);
+                        showMessageBox("Failed to export to ZIP: " + error.message);
+                    }
+                }
+                async function saveSaveFile(fileName, data) {
+                    try {
+                        await openIndexedDB();
+                        const transaction = db.transaction([STORE_NAME], 'readwrite');
+                        const objectStore = transaction.objectStore(STORE_NAME);
+                        const request = objectStore.put(data, fileName);
+                        return new Promise((resolve, reject) => {
+                            request.onsuccess = () => {
+                                resolve();
+                            };
+                            request.onerror = (event) => {
+                                console.error("Error saving file:", event.target.error);
+                                showMessageBox("Error saving file: " + (event.target.error ? event.target.error.message : "Unknown error"));
+                                reject("Error saving file.");
+                            };
+                        });
+                    } catch (error) {
+                        console.error("Error in saveSaveFile:", error);
+                        showMessageBox("Failed to save file: " + error.message);
+                    }
+                }
+                async function openSaveManager() {
+                    const saveManagerModal = document.getElementById('saveManagerModal');
+                    saveManagerModal.style.display = 'flex';
+                    await displaySaveFiles();
+                    try { GM_pause(); } catch (e) {}
+                }
+                
+                function closeSaveManager() {
+                    window.location.reload();
+                    const saveManagerModal = document.getElementById('saveManagerModal');
+                    saveManagerModal.style.display = 'none';
+                }
+                
+                function closeSMnoreload() {
+                    const saveManagerModal = document.getElementById('saveManagerModal');
+                    saveManagerModal.style.display = 'none';
+                    try { GM_unpause(); } catch (e) {}
+                }
+                let uploadFileNameInput = null;
+                
+                function protectInputFromGame(e) {
+                    if (uploadFileNameInput && document.activeElement === uploadFileNameInput) {
+                        e.stopImmediatePropagation();
+                    }
+                }
+                document.addEventListener('DOMContentLoaded', () => {
+                    uploadFileNameInput = document.getElementById('uploadFileNameInput');
+                    const uploadFileInput = document.getElementById('uploadFileInput');
+                    
+                    if (uploadFileInput && uploadFileNameInput) {
+                        if (uploadFileInput && uploadFileNameInput) {
+                            uploadFileInput.addEventListener('change', () => {
+                                if (uploadFileInput.files.length === 1) {
+                                    uploadFileNameInput.disabled = false;
+                                    uploadFileNameInput.value = uploadFileInput.files[0].name;
+                                    uploadFileNameInput.placeholder = 'Enter the corresponding filename (e.g., filech1_0, dr.ini / for single file only)';
+                                } else {
+                                    uploadFileNameInput.disabled = true;
+                                    uploadFileNameInput.value = '';
+                                    uploadFileNameInput.placeholder = 'Custom filenames do not work when selecting multiple files!';
+                                }
+                            });
+                        }
+                    }
+                    if (uploadFileNameInput) {
+                        window.addEventListener('keydown', protectInputFromGame, true);
+                        window.addEventListener('keyup', protectInputFromGame, true);
+                        window.addEventListener('keypress', protectInputFromGame, true);
+                    }
+                });
+                return {
+                    openSaveManager: openSaveManager,
+                    closeSaveManager: closeSaveManager,
+                    closeSMnoreload: closeSMnoreload,
+                    handleUpload: handleUpload,
+                    showMessageBox: showMessageBox,
+                    confirmBox: confirmBox,
+                    openIndexedDB: openIndexedDB,
+                    exportAllToZip: exportAllToZip
+                };
+            })();
+            window.addEventListener('load', async () => {
+                try {
+                    await window.DeltaruneSaveManager.openIndexedDB();
+                } catch (error) {
+                    console.error("Failed to initialize IndexedDB on load:", error);
+                }
+            });
+        </script>
+        
+        <script>
+            function simulateKeyEvent(eventType, key, keyCode) {
+                const event = new KeyboardEvent(eventType, {
+                    key: key,
+                    keyCode: keyCode,
+                    which: keyCode,
+                    bubbles: true,
+                    cancelable: true,
+                });
+                document.dispatchEvent(event);
+            }
+        </script>
+        <script>
+		window.addEventListener('load', () => {
+
+    function isMobileDevice() {
+
+        if (navigator.userAgentData && navigator.userAgentData.mobile) {
+            return true;
+        }
+
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        return mobileRegex.test(navigator.userAgent);
+    }
+
+    if (!isMobileDevice()) {
+        return;
+    }
+
+    let tapCount = 0;
+    let tapTimer = null;
+    const requiredTaps = 5;
+    const tapTimeout = 400;
+
+    document.body.addEventListener('touchstart', (e) => {
+
+        if (e.target.closest('#button-zone') || e.target.closest('#joystick-zone')) {
+            return;
+        }
+
+        tapCount++;
+
+        clearTimeout(tapTimer);
+
+        tapTimer = setTimeout(() => {
+            tapCount = 0;
+        }, tapTimeout);
+
+        if (tapCount >= requiredTaps) {
+
+            if (typeof showUI === 'function') {
+                showUI();
+            }
+
+            tapCount = 0;
+            clearTimeout(tapTimer);
+        }
+    });
+
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls) {
+        mobileControls.style.display = 'block';
+    }
+
+    const buttonZone = document.getElementById('button-zone');
+    const joystickZone = document.getElementById('joystick-zone');
+    const keyState = {
+        up: false,
+        down: false,
+        left: false,
+        right: false
+    };
+    const keyMap = {
+        up: {
+            key: 'ArrowUp',
+            code: 38
+        },
+        down: {
+            key: 'ArrowDown',
+            code: 40
+        },
+        left: {
+            key: 'ArrowLeft',
+            code: 37
+        },
+        right: {
+            key: 'ArrowRight',
+            code: 39
+        }
+    };
+    let joystick = null;
+
+    function createOrUpdateJoystick() {
+        if (joystick) {
+            joystick.destroy();
+        }
+        if (!joystickZone) return;
+        const zoneRect = joystickZone.getBoundingClientRect();
+        if (zoneRect.width === 0 || zoneRect.height === 0) {
+            console.warn('joystickZone has zero size, skipping joystick creation');
+            return;
+        }
+
+        const joystickSize = Math.max(100, Math.min(zoneRect.width, zoneRect.height) * 0.6);
+        const centerLeft = zoneRect.width / 2;
+        const centerTop = zoneRect.height / 2;
+        joystick = nipplejs.create({
+            zone: joystickZone,
+            mode: 'static',
+            position: {
+                left: centerLeft + 'px',
+                top: centerTop + 'px'
+            },
+            size: joystickSize,
+            color: 'white',
+            threshold: 0.2
+        });
+
+        joystick.on('move', (evt, data) => {
+            if (!data || !data.vector) return;
+
+            const x = data.vector.x;
+            const y = data.vector.y;
+            const threshold = 0.3;
+
+            const newKeyState = {
+                up: false,
+                down: false,
+                left: false,
+                right: false
+            };
+
+            if (y < -threshold) newKeyState.down = true;
+            if (y > threshold) newKeyState.up = true;
+            if (x < -threshold) newKeyState.left = true;
+            if (x > threshold) newKeyState.right = true;
+
+            for (const dir in keyState) {
+                if (keyState[dir] && !newKeyState[dir]) {
+                    simulateKeyEvent('keyup', keyMap[dir].key, keyMap[dir].code);
+                } else if (!keyState[dir] && newKeyState[dir]) {
+                    simulateKeyEvent('keydown', keyMap[dir].key, keyMap[dir].code);
+                }
+                keyState[dir] = newKeyState[dir];
+            }
+        });
+
+        joystick.on('end', () => {
+            for (const dir in keyState) {
+                if (keyState[dir]) {
+                    simulateKeyEvent('keyup', keyMap[dir].key, keyMap[dir].code);
+                    keyState[dir] = false;
+                }
+            }
+        });
+    }
+
+    function updateControlPositions() {
+        if (!buttonZone || !joystickZone) return;
+        const isTabletLayout = (window.innerWidth / window.innerHeight) > 1.3;
+        joystickZone.style.cssText = '';
+        buttonZone.style.cssText = '';
+        if (isTabletLayout) {
+            const sideWidth = '25vw';
+            joystickZone.style.left = '0';
+            joystickZone.style.top = '0';
+            joystickZone.style.width = sideWidth;
+            joystickZone.style.height = '100%';
+            joystickZone.style.background = 'transparent';
+            buttonZone.style.right = '0';
+            buttonZone.style.top = '0';
+            buttonZone.style.width = sideWidth;
+            buttonZone.style.height = '100%';
+            buttonZone.style.background = 'transparent';
+        } else {
+            const controlHeight = '30vh';
+            joystickZone.style.left = '0';
+            joystickZone.style.bottom = '0';
+            joystickZone.style.width = '50vw';
+            joystickZone.style.height = controlHeight;
+            joystickZone.style.background = 'rgba(0,0,0,0.2)';
+            buttonZone.style.right = '0';
+            buttonZone.style.bottom = '0';
+            buttonZone.style.width = '50vw';
+            buttonZone.style.height = controlHeight;
+            buttonZone.style.background = 'rgba(0,0,0,0.2)';
+        }
+        createOrUpdateJoystick();
+    }
+    const resizeObserver = new ResizeObserver(() => {
+        setTimeout(() => {
+            window.requestAnimationFrame(updateControlPositions);
+        }, 100);
+    });
+    resizeObserver.observe(document.body);
+    setTimeout(updateControlPositions, 500);
+    const buttons = [{
+        id: 'button-z',
+        key: 'z',
+        keyCode: 90,
+        img_up: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMGgxMU02IDFoMTVNNSAyaDE3TTQgM2gxOU0zIDRoMjFNMyA1aDRNMjAgNWg0TTIgNmg1TTIwIDZoNU0yIDdoNU05IDdoOE0yMCA3aDVNMSA4aDZNOCA4aDhNMjAgOGg2TTEgOWgxNE0xOSA5aDdNMSAxMGgxM00xOCAxMGg4TTEgMTFoMTJNMTcgMTFoOU0xIDEyaDExTTE2IDEyaDEwTTEgMTNoMTBNMTUgMTNoMTFNMSAxNGg5TTE0IDE0aDEyTTEgMTVoOE0xMyAxNWgxM00yIDE2aDZNMTIgMTZoN00yMCAxNmg1TTIgMTdoNU0xMSAxN2g3TTIwIDE3aDVNMyAxOGg0TTIwIDE4aDRNMyAxOWg0TTIwIDE5aDRNNCAyMGgxOU01IDIxaDE3TTYgMjJoMTVNOCAyM2gxMU0xMCAyNGg3IiAvPgo8cGF0aCBzdHJva2U9IiMyYTFmNDIiIGQ9Ik03IDVoMTNNNyA2aDEzTTEgN2gxTTcgN2gyTTE3IDdoM00yNSA3aDFNNyA4aDFNMTYgOGg0TTE1IDloNE0wIDEwaDFNMTQgMTBoNE0yNiAxMGgxTTAgMTFoMU0xMyAxMWg0TTI2IDExaDFNMCAxMmgxTTEyIDEyaDRNMjYgMTJoMU0wIDEzaDFNMTEgMTNoNE0yNiAxM2gxTTAgMTRoMU0xMCAxNGg0TTI2IDE0aDFNMCAxNWgxTTkgMTVoNE0yNiAxNWgxTTAgMTZoMk04IDE2aDRNMTkgMTZoMU0yNSAxNmgyTTAgMTdoMk03IDE3aDRNMTggMTdoMk0yNSAxN2gyTTAgMThoM003IDE4aDEzTTI0IDE4aDNNMSAxOWgyTTcgMTloMTNNMjQgMTloMk0xIDIwaDNNMjMgMjBoM00xIDIxaDRNMjIgMjFoNE0yIDIyaDRNMjEgMjJoNE0zIDIzaDVNMTkgMjNoNU0zIDI0aDdNMTcgMjRoN000IDI1aDE5TTYgMjZoMTVNNyAyN2gxM00xMCAyOGg3IiAvPgo8L3N2Zz4=',
+        img_down: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMmgxMU02IDNoMTVNNSA0aDE3TTQgNWgxOU0zIDZoMjFNMyA3aDRNMjAgN2g0TTIgOGg1TTIwIDhoNU0yIDloNU05IDloOE0yMCA5aDVNMSAxMGg2TTggMTBoOE0yMCAxMGg2TTEgMTFoMTRNMTkgMTFoN00xIDEyaDEzTTE4IDEyaDhNMSAxM2gxMk0xNyAxM2g5TTEgMTRoMTFNMTYgMTRoMTBNMSAxNWgxME0xNSAxNWgxMU0xIDE2aDlNMTQgMTZoMTJNMSAxN2g4TTEzIDE3aDEzTTIgMThoNk0xMiAxOGg3TTIwIDE4aDVNMiAxOWg1TTExIDE5aDdNMjAgMTloNU0zIDIwaDRNMjAgMjBoNE0zIDIxaDRNMjAgMjFoNE00IDIyaDE5TTUgMjNoMTdNNiAyNGgxNU04IDI1aDExTTEwIDI2aDciIC8+CjxwYXRoIHN0cm9rZT0iI2NjNzIzZiIgZD0iTTcgN2gxM003IDhoMTNNNyA5aDJNMTcgOWgzTTcgMTBoMU0xNiAxMGg0TTE1IDExaDRNMTQgMTJoNE0xMyAxM2g0TTEyIDE0aDRNMTEgMTVoNE0xMCAxNmg0TTkgMTdoNE04IDE4aDRNMTkgMThoMU03IDE5aDRNMTggMTloMk03IDIwaDEzTTcgMjFoMTMiIC8+CjxwYXRoIHN0cm9rZT0iIzJhMWY0MiIgZD0iTTEgOWgxTTI1IDloMU0wIDEyaDFNMjYgMTJoMU0wIDEzaDFNMjYgMTNoMU0wIDE0aDFNMjYgMTRoMU0wIDE1aDFNMjYgMTVoMU0wIDE2aDFNMjYgMTZoMU0wIDE3aDFNMjYgMTdoMU0wIDE4aDJNMjUgMThoMk0xIDE5aDFNMjUgMTloMU0xIDIwaDJNMjQgMjBoMk0xIDIxaDJNMjQgMjFoMk0yIDIyaDJNMjMgMjJoMk0zIDIzaDJNMjIgMjNoMk0zIDI0aDNNMjEgMjRoM000IDI1aDRNMTkgMjVoNE02IDI2aDRNMTcgMjZoNE03IDI3aDEzTTEwIDI4aDciIC8+Cjwvc3ZnPg=='
+    }, {
+        id: 'button-x',
+        key: 'x',
+        keyCode: 88,
+        img_up: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMGgxMU02IDFoMTVNNSAyaDE3TTQgM2gxOU0zIDRoMjFNMyA1aDJNMTAgNWg3TTIyIDVoMk0yIDZoNE0xMCA2aDdNMjEgNmg0TTIgN2g1TTExIDdoNU0yMCA3aDVNMSA4aDdNMTIgOGgzTTE5IDhoN00xIDloOE0xMyA5aDFNMTggOWg4TTEgMTBoOU0xNyAxMGg5TTEgMTFoMTBNMTYgMTFoMTBNMSAxMmgxME0xNiAxMmgxME0xIDEzaDEwTTE2IDEzaDEwTTEgMTRoOU0xNyAxNGg5TTEgMTVoOE0xMyAxNWgxTTE4IDE1aDhNMiAxNmg2TTEyIDE2aDNNMTkgMTZoNk0yIDE3aDVNMTEgMTdoNU0yMCAxN2g1TTMgMThoM00xMCAxOGg3TTIxIDE4aDNNMyAxOWgyTTEwIDE5aDdNMjIgMTloMk00IDIwaDE5TTUgMjFoMTdNNiAyMmgxNU04IDIzaDExTTEwIDI0aDciIC8+CjxwYXRoIHN0cm9rZT0iIzJhMWY0MiIgZD0iTTUgNWg1TTE3IDVoNU02IDZoNE0xNyA2aDRNMSA3aDFNNyA3aDRNMTYgN2g0TTI1IDdoMU04IDhoNE0xNSA4aDRNOSA5aDRNMTQgOWg0TTAgMTBoMU0xMCAxMGg3TTI2IDEwaDFNMCAxMWgxTTExIDExaDVNMjYgMTFoMU0wIDEyaDFNMTEgMTJoNU0yNiAxMmgxTTAgMTNoMU0xMSAxM2g1TTI2IDEzaDFNMCAxNGgxTTEwIDE0aDdNMjYgMTRoMU0wIDE1aDFNOSAxNWg0TTE0IDE1aDRNMjYgMTVoMU0wIDE2aDJNOCAxNmg0TTE1IDE2aDRNMjUgMTZoMk0wIDE3aDJNNyAxN2g0TTE2IDE3aDRNMjUgMTdoMk0wIDE4aDNNNiAxOGg0TTE3IDE4aDRNMjQgMThoM00xIDE5aDJNNSAxOWg1TTE3IDE5aDVNMjQgMTloMk0xIDIwaDNNMjMgMjBoM00xIDIxaDRNMjIgMjFoNE0yIDIyaDRNMjEgMjJoNE0zIDIzaDVNMTkgMjNoNU0zIDI0aDdNMTcgMjRoN000IDI1aDE5TTYgMjZoMTVNNyAyN2gxM00xMCAyOGg3IiAvPgo8L3N2Zz4=',
+        img_down: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMmgxMU02IDNoMTVNNSA0aDE3TTQgNWgxOU0zIDZoMjFNMyA3aDJNMTAgN2g3TTIyIDdoMk0yIDhoNE0xMCA4aDdNMjEgOGg0TTIgOWg1TTExIDloNU0yMCA5aDVNMSAxMGg3TTEyIDEwaDNNMTkgMTBoN00xIDExaDhNMTMgMTFoMU0xOCAxMWg4TTEgMTJoOU0xNyAxMmg5TTEgMTNoMTBNMTYgMTNoMTBNMSAxNGgxME0xNiAxNGgxME0xIDE1aDEwTTE2IDE1aDEwTTEgMTZoOU0xNyAxNmg5TTEgMTdoOE0xMyAxN2gxTTE4IDE3aDhNMiAxOGg2TTEyIDE4aDNNMTkgMThoNk0yIDE5aDVNMTEgMTloNU0yMCAxOWg1TTMgMjBoM00xMCAyMGg3TTIxIDIwaDNNMyAyMWgyTTEwIDIxaDdNMjIgMjFoMk00IDIyaDE5TTUgMjNoMTdNNiAyNGgxNU04IDI1aDExTTEwIDI2aDciIC8+CjxwYXRoIHN0cm9rZT0iI2NjNzIzZiIgZD0iTTUgN2g1TTE3IDdoNU02IDhoNE0xNyA4aDRNNyA5aDRNMTYgOWg0TTggMTBoNE0xNSAxMGg0TTkgMTFoNE0xNCAxMWg0TTEwIDEyaDdNMTEgMTNoNU0xMSAxNGg1TTExIDE1aDVNMTAgMTZoN005IDE3aDRNMTQgMTdoNE04IDE4aDRNMTUgMThoNE03IDE5aDRNMTYgMTloNE02IDIwaDRNMTcgMjBoNE01IDIxaDVNMTcgMjFoNSIgLz4KPHBhdGggc3Ryb2tlPSIjMmExZjQyIiBkPSJNMSA5aDFNMjUgOWgxTTAgMTJoMU0yNiAxMmgxTTAgMTNoMU0yNiAxM2gxTTAgMTRoMU0yNiAxNGgxTTAgMTVoMU0yNiAxNWgxTTAgMTZoMU0yNiAxNmgxTTAgMTdoMU0yNiAxN2gxTTAgMThoMk0yNSAxOGgyTTEgMTloMU0yNSAxOWgxTTEgMjBoMk0yNCAyMGgyTTEgMjFoMk0yNCAyMWgyTTIgMjJoMk0yMyAyMmgyTTMgMjNoMk0yMiAyM2gyTTMgMjRoM00yMSAyNGgzTTQgMjVoNE0xOSAyNWg0TTYgMjZoNE0xNyAyNmg0TTcgMjdoMTNNMTAgMjhoNyIgLz4KPC9zdmc+'
+    }, {
+        id: 'button-c',
+        key: 'c',
+        keyCode: 67,
+        img_up: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMGgxMU02IDFoMTVNNSAyaDE3TTQgM2gxOU0zIDRoOE0xNiA0aDhNMyA1aDZNMTggNWg2TTIgNmg1TTIwIDZoNU0yIDdoNU0xMSA3aDVNMjAgN2g1TTEgOGg1TTEwIDhoN00yMCA4aDZNMSA5aDVNOSA5aDlNMjAgOWg2TTEgMTBoNE04IDEwaDE4TTEgMTFoNE04IDExaDE4TTEgMTJoNE04IDEyaDE4TTEgMTNoNE04IDEzaDE4TTEgMTRoNE04IDE0aDE4TTEgMTVoNU05IDE1aDlNMjAgMTVoNk0yIDE2aDRNMTAgMTZoN00yMCAxNmg1TTIgMTdoNU0xMSAxN2g1TTIwIDE3aDVNMyAxOGg0TTIwIDE4aDRNMyAxOWg2TTE4IDE5aDZNNCAyMGg3TTE2IDIwaDdNNSAyMWgxN002IDIyaDE1TTggMjNoMTFNMTAgMjRoNyIgLz4KPHBhdGggc3Ryb2tlPSIjMmExZjQyIiBkPSJNMTEgNGg1TTkgNWg5TTcgNmgxM00xIDdoMU03IDdoNE0xNiA3aDRNMjUgN2gxTTYgOGg0TTE3IDhoM002IDloM00xOCA5aDJNMCAxMGgxTTUgMTBoM00yNiAxMGgxTTAgMTFoMU01IDExaDNNMjYgMTFoMU0wIDEyaDFNNSAxMmgzTTI2IDEyaDFNMCAxM2gxTTUgMTNoM00yNiAxM2gxTTAgMTRoMU01IDE0aDNNMjYgMTRoMU0wIDE1aDFNNiAxNWgzTTE4IDE1aDJNMjYgMTVoMU0wIDE2aDJNNiAxNmg0TTE3IDE2aDNNMjUgMTZoMk0wIDE3aDJNNyAxN2g0TTE2IDE3aDRNMjUgMTdoMk0wIDE4aDNNNyAxOGgxM00yNCAxOGgzTTEgMTloMk05IDE5aDlNMjQgMTloMk0xIDIwaDNNMTEgMjBoNU0yMyAyMGgzTTEgMjFoNE0yMiAyMWg0TTIgMjJoNE0yMSAyMmg0TTMgMjNoNU0xOSAyM2g1TTMgMjRoN00xNyAyNGg3TTQgMjVoMTlNNiAyNmgxNU03IDI3aDEzTTEwIDI4aDciIC8+Cjwvc3ZnPg==',
+        img_down: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyNyAyOSIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzQ3NDA2ZiIgZD0iTTggMmgxMU02IDNoMTVNNSA0aDE3TTQgNWgxOU0zIDZoOE0xNiA2aDhNMyA3aDZNMTggN2g2TTIgOGg1TTIwIDhoNU0yIDloNU0xMSA5aDVNMjAgOWg1TTEgMTBoNU0xMCAxMGg3TTIwIDEwaDZNMSAxMWg1TTkgMTFoOU0yMCAxMWg2TTEgMTJoNE04IDEyaDE4TTEgMTNoNE04IDEzaDE4TTEgMTRoNE04IDE0aDE4TTEgMTVoNE04IDE1aDE4TTEgMTZoNE04IDE2aDE4TTEgMTdoNU05IDE3aDlNMjAgMTdoNk0yIDE4aDRNMTAgMThoN00yMCAxOGg1TTIgMTloNU0xMSAxOWg1TTIwIDE5aDVNMyAyMGg0TTIwIDIwaDRNMyAyMWg2TTE4IDIxaDZNNCAyMmg3TTE2IDIyaDdNNSAyM2gxN002IDI0aDE1TTggMjVoMTFNMTAgMjZoNyIgLz4KPHBhdGggc3Ryb2tlPSIjY2M3MjNmIiBkPSJNMTEgNmg1TTkgN2g5TTcgOGgxM003IDloNE0xNiA5aDRNNiAxMGg0TTE3IDEwaDNNNiAxMWgzTTE4IDExaDJNNSAxMmgzTTUgMTNoM001IDE0aDNNNSAxNWgzTTUgMTZoM002IDE3aDNNMTggMTdoMk02IDE4aDRNMTcgMThoM003IDE5aDRNMTYgMTloNE03IDIwaDEzTTkgMjFoOU0xMSAyMmg1IiAvPgo8cGF0aCBzdHJva2U9IiMyYTFmNDIiIGQ9Ik0xIDloMU0yNSA5aDFNMCAxMmgxTTI2IDEyaDFNMCAxM2gxTTI2IDEzaDFNMCAxNGgxTTI2IDE0aDFNMCAxNWgxTTI2IDE1aDFNMCAxNmgxTTI2IDE2aDFNMCAxN2gxTTI2IDE3aDFNMCAxOGgyTTI1IDE4aDJNMSAxOWgxTTI1IDE5aDFNMSAyMGgyTTI0IDIwaDJNMSAyMWgyTTI0IDIxaDJNMiAyMmgyTTIzIDIyaDJNMyAyM2gyTTIyIDIzaDJNMyAyNGgzTTIxIDI0aDNNNCAyNWg0TTE5IDI1aDRNNiAyNmg0TTE3IDI2aDRNNyAyN2gxM00xMCAyOGg3IiAvPgo8L3N2Zz4='
+    }, ];
+    buttons.forEach(buttonInfo => {
+        const buttonElement = document.getElementById(buttonInfo.id);
+        if (buttonElement) {
+            buttonElement.src = buttonInfo.img_up;
+            buttonElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                buttonElement.classList.add('pressed');
+                buttonElement.src = buttonInfo.img_down;
+                simulateKeyEvent('keydown', buttonInfo.key, buttonInfo.keyCode);
+            }, {
+                passive: false
+            });
+            buttonElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                buttonElement.classList.remove('pressed');
+                buttonElement.src = buttonInfo.img_up;
+                simulateKeyEvent('keyup', buttonInfo.key, buttonInfo.keyCode);
+            }, {
+                passive: false
+            });
+        }
+    });
+});
+</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+        <script>
+            function toggleFullscreen() {
+                const doc = document;
+                const docEl = doc.documentElement;
+                
+                const isInFullscreen = () =>
+                doc.fullscreenElement ||
+                doc.webkitFullscreenElement ||
+                doc.mozFullScreenElement ||
+                doc.msFullscreenElement;
+                
+                const requestFullscreen = () => {
+                    if (docEl.requestFullscreen) docEl.requestFullscreen();
+                    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                    else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
+                    else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+                };
+                
+                const exitFullscreen = () => {
+                    if (doc.exitFullscreen) doc.exitFullscreen();
+                    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+                    else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+                    else if (doc.msExitFullscreen) doc.msExitFullscreen();
+                };
+                
+                if (!isInFullscreen()) {
+                    requestFullscreen();
+                } else {
+                    exitFullscreen();
+                }
+            }
+            const originalConsoleLog = console.log;
+            console.log = function(...args) {
+                originalConsoleLog.apply(console, args);
+                
+                /* deltarune chapter change handler */
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter1_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '1');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter2_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '2');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter3_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '3');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter4_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '4');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter5_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '5');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter6_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '6');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('in:chapter7_mac'))) {
+                    let params = new URLSearchParams(window.location.search);
+                    params.set('c', '7');
+                    window.location.search = params.toString();
+                }
+                if (args.some(arg => typeof arg === 'string' && arg.includes('webquitpage'))) {
+                    showQuitConfirm();
+                }
+            };
+            document.addEventListener('DOMContentLoaded', () => {
+                const fullscreenButton = document.getElementById('fullscreen');
+                if (fullscreenButton) {
+                    fullscreenButton.addEventListener('click', toggleFullscreen);
+                }
+            });
+        </script>
+        <script>
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const originalLog = console.log;
+            
+            console.log = function(message) {
+                originalLog.apply(console, arguments);
+                
+                if (typeof message === 'string') {
+                    if (message.startsWith('Success Loaded game file') || message.indexOf('Entering main loop') >= 0) {
+                        if (window.DRLoading) { window.DRLoading.hide(); }
+                        else if (loadingOverlay) { loadingOverlay.style.display = 'none'; }
+                    }
+                }
+            };
+        </script>
+</body>
+
+</html>
+
