@@ -28,7 +28,7 @@ Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel. Fullscreen,
 Hard Mode is implemented as byte-level patches to the GameMaker data files, applied in the browser right before the game boots:
 
 - `scr_damage`: damage taken by the party is doubled (`tdamage = (tdamage - defense) × 2`)
-- `obj_battlecontroller`: the enemy turn timer counts down by **1.2 per frame** instead of 1, so enemy attack phases run 1.2× as fast. The timer check was restructured into chained branches to fit the 12-byte double push in-place, and the variable reference chains (`VARI`) were relinked for the moved instructions.
+- Every constant that starts or extends an enemy attack phase (`global.turntimer = N`) is scaled to `round(N / 1.2)`, so each phase ends after N/1.2 frames instead of N — attack phases run **1.2× as fast**. The countdown itself stays a plain integer −1 per frame: no instructions move, no branches change, no reference chains are touched.
 
 The patch data is embedded in `index.html` / `onefile.html`; the original chapter archives (`chapter*.unx.part*`) are untouched. Normal Mode loads the unmodified data.
 
