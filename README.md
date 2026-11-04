@@ -13,12 +13,12 @@ Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel.
 
 ## HARD MODE
 
-Pick your mode on the **chapter select screen** itself: the bottom menu row now has three real game options — **Quit · English · NORMAL/HARD**. The difficulty choice is a native menu entry drawn by the game: navigate to it with **left/right**, confirm with **Z**, and it flips between `NORMAL` and `HARD` right in the row (with the game's own selection sound and SOUL cursor). The yellow option with the SOUL next to it is the one you're on.
+Pick your mode on the **chapter select screen** itself: the **MODE** selector sits in the bottom-right corner of the menu, level with the game's version line. It's styled exactly like the game's own footer options — the red SOUL marks the option you're on, the active one lights up yellow. Click **NORMAL** / **HARD**, or press **H** to flip it.
 
 - You take **2× damage** from enemy attacks
 - Enemy/boss attack phases run **1.2× as fast**
 - The choice is saved in `localStorage` and remembered until you swap it
-- The version line in the corner also shows the current mode (`kantasu` / `kantasu [HARD]`)
+- The version line in the corner also shows the current mode (`kantasu` / `kantasu [HARD]`), updating live the moment you flip the toggle
 
 **Bisecting a crash** — you can load only one half of the hard mode patches with a URL parameter:
 
@@ -45,17 +45,13 @@ Hard Mode is implemented as byte-level patches to the GameMaker data files, appl
 
 Both components are stack-balanced, keep every branch target on an instruction boundary, and leave all FUNC/VARI reference chains walking exactly as in the original data (verified per chapter: only `scr_damage` and `obj_battlecontroller_Step_0` decode differently, and only in the patched region).
 
-### The native MODE choice (chapter select)
+### The MODE selector (chapter select)
 
-The difficulty toggle is real game code, not an HTML overlay. `game.unx` (the chapter-select app) gets a patch set (`CHAPTER_SELECT_PATCHES` in the page source) that:
-
-- redirects a dead console-only branch in `obj_CHAPTER_SELECT`'s create code so `obj_init_console` (Switch/PS4-only, never used on the web build) is spawned alongside the normal `obj_init_pc` initializer;
-- overwrites `obj_init_console`'s create script (and two of its unused method bodies) with a small installer: it creates a genuine `obj_ui_choice` reading `NORMAL`/`HARD`, positions it in the footer row next to `Quit` and `English`, and appends it to the footer's `_choices` array — so the game's own left/right rotation, highlight, SOUL cursor and confirm sound all work on it for free;
-- gives the choice a `trigger_event` handler that flips the mode flag, rewrites the choice text and reports the change through the game's own debug output (`drmode:hard` / `drmode:normal`), which the page picks up from the console and stores in `localStorage`.
-
-Every patched byte region was rebuilt with full reference-chain surgery (VARI/FUNC occurrence counts, chain links, terminal string ids) and verified statically: all functions decode to their exact original lengths, all variable and function reference chains walk cleanly, no VM type violations, all jump targets land on instruction boundaries, and the patch table reproduces the intended patched file byte-for-byte.
+The chapter-select screen (`game.unx`) only gets one tiny patch: the 24-byte version line in the corner is baked to read `kantasu` or `kantasu [HARD]`, matching the selected mode (same length as the original line, so nothing moves). The **MODE** selector itself lives on the page side (`#drModeBar`): it's anchored to the game canvas, drawn in the game's own style (Press Start 2P, red SOUL, yellow highlight) and flips the mode instantly — including rewriting the version line *inside the running game's memory*, so the corner label changes the same frame you click, with no reload.
 
 The chapter archives (`chapter*.unx.part*`) are untouched on disk; Normal Mode loads them unmodified.
+
+> History: v5 briefly shipped a fully native in-game MODE choice (an injected `obj_ui_choice` installed by patched console-init code). It hung the game at boot, so v6 reverted it — the chapter-select data file is now byte-identical to the original apart from the 21-byte version-line text.
 
 ## Running your own copy
 
