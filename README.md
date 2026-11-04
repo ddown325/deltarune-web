@@ -13,11 +13,12 @@ Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel.
 
 ## HARD MODE
 
-Pick your mode on the **chapter select screen**: the `MODE  ♥ NORMAL  HARD` toggle sits right below the copyright line at the bottom of the screen — click **NORMAL / HARD** (or press **H**). The yellow option with the SOUL next to it is the one you're on. The game's own version line in the corner shows the current mode (`kantasu / IDIOT` / `kantasu / IDIOT [HARD]`).
+Pick your mode on the **chapter select screen** itself: the bottom menu row now has three real game options — **Quit · English · NORMAL/HARD**. The difficulty choice is a native menu entry drawn by the game: navigate to it with **left/right**, confirm with **Z**, and it flips between `NORMAL` and `HARD` right in the row (with the game's own selection sound and SOUL cursor). The yellow option with the SOUL next to it is the one you're on.
 
 - You take **2× damage** from enemy attacks
 - Enemy/boss attack phases run **1.2× as fast**
 - The choice is saved in `localStorage` and remembered until you swap it
+- The version line in the corner also shows the current mode (`kantasu` / `kantasu [HARD]`)
 
 **Bisecting a crash** — you can load only one half of the hard mode patches with a URL parameter:
 
@@ -25,8 +26,6 @@ Pick your mode on the **chapter select screen**: the `MODE  ♥ NORMAL  HARD` to
 - `index.html?c=1&hm=speed` — only the 1.2× attack speed patch
 - `index.html?c=1&hm=off` — pristine chapter data (normal mode, even if HARD is selected)
 - `index.html?c=1&hm=full` — everything (default)
-
-If the game ever crashes when you take a hit, try `?hm=damage` and `?hm=speed` separately and note which one still crashes — that pinpoints the culprit instantly.
 
 ## What's in this port
 
@@ -41,12 +40,22 @@ If the game ever crashes when you take a hit, try `?hm=damage` and `?hm=speed` s
 
 Hard Mode is implemented as byte-level patches to the GameMaker data files, applied in the browser right before the game boots:
 
-- **damage** — inside `scr_damage`, the `ceil(...)` call that finalises damage taken by the party is replaced by `× 2` (same instruction size, stack-neutral). The `ceil` function's reference chain is repaired accordingly (occurrence count −1, the previous link re-pointed past the removed call, per chapter).
+- **damage** — inside `scr_damage`, the `ceil(...)` call that finalises damage taken by the party is replaced by `× 2` (same instruction size, stack-neutral, typed as `mul.i.v` exactly like the compiler emits it). The `ceil` function's reference chain is repaired accordingly (occurrence count −1, the previous link re-pointed past the removed call, per chapter).
 - **speed** — in `obj_battlecontroller`'s Step event, `global.turntimer -= 1` becomes `-= 1.2`, so attack phases count down 1.2× faster. The restructured `&&` short-circuit around it is re-emitted in an equivalent shorter form, and the `turntimer` / `reset` variable reference chains are repaired (deltas re-pointed, per chapter).
 
 Both components are stack-balanced, keep every branch target on an instruction boundary, and leave all FUNC/VARI reference chains walking exactly as in the original data (verified per chapter: only `scr_damage` and `obj_battlecontroller_Step_0` decode differently, and only in the patched region).
 
-The patch data is embedded in `index.html` / `onefile.html` (split into `damage` and `speed` lists per chapter); the original chapter archives (`chapter*.unx.part*`) are untouched. Normal Mode loads the unmodified data.
+### The native MODE choice (chapter select)
+
+The difficulty toggle is real game code, not an HTML overlay. `game.unx` (the chapter-select app) gets a patch set (`CHAPTER_SELECT_PATCHES` in the page source) that:
+
+- redirects a dead console-only branch in `obj_CHAPTER_SELECT`'s create code so `obj_init_console` (Switch/PS4-only, never used on the web build) is spawned alongside the normal `obj_init_pc` initializer;
+- overwrites `obj_init_console`'s create script (and two of its unused method bodies) with a small installer: it creates a genuine `obj_ui_choice` reading `NORMAL`/`HARD`, positions it in the footer row next to `Quit` and `English`, and appends it to the footer's `_choices` array — so the game's own left/right rotation, highlight, SOUL cursor and confirm sound all work on it for free;
+- gives the choice a `trigger_event` handler that flips the mode flag, rewrites the choice text and reports the change through the game's own debug output (`drmode:hard` / `drmode:normal`), which the page picks up from the console and stores in `localStorage`.
+
+Every patched byte region was rebuilt with full reference-chain surgery (VARI/FUNC occurrence counts, chain links, terminal string ids) and verified statically: all functions decode to their exact original lengths, all variable and function reference chains walk cleanly, no VM type violations, all jump targets land on instruction boundaries, and the patch table reproduces the intended patched file byte-for-byte.
+
+The chapter archives (`chapter*.unx.part*`) are untouched on disk; Normal Mode loads them unmodified.
 
 ## Running your own copy
 
@@ -61,6 +70,6 @@ Repo layout: `index.html` + `onefile.html` (the site), `game.unx.part001` (chapt
 ## Credits
 
 - **DELTARUNE** by Toby Fox — [deltarune.com](https://deltarune.com)
-- Web port by **kantasu / IDIOT**
+- Web port by **kantasu**
 - The GameMaker-to-web loader engineering this project started from was built by **Mollomm1**
 - *Press Start 2P* font by CodeMan38 — SIL Open Font License 1.1
