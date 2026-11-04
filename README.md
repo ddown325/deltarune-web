@@ -9,28 +9,44 @@ An unofficial browser port of DELTARUNE (Chapters 1–5) with a built-in **HARD 
   - Jump straight to a chapter: `index.html?c=1` … `?c=5`
 - **Single file** — download `onefile.html` alone, put it anywhere (even your desktop) and open it. It streams all game data from the Pages deployment, so it needs internet. Works great as a mobile home-screen app.
 
-Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel. Fullscreen, save management and the difficulty toggle are in the button bar.
+Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel.
+
+## HARD MODE
+
+Pick your mode on the **chapter select screen**: the `MODE  ♥ NORMAL  HARD` toggle sits right below the copyright line at the bottom of the screen — click **NORMAL / HARD** (or press **H**). The yellow option with the SOUL next to it is the one you're on. The game's own version line in the corner shows the current mode (`kantasu / IDIOT` / `kantasu / IDIOT [HARD]`).
+
+- You take **2× damage** from enemy attacks
+- Enemy/boss attack phases run **1.2× as fast**
+- The choice is saved in `localStorage` and remembered until you swap it
+
+**Bisecting a crash** — you can load only one half of the hard mode patches with a URL parameter:
+
+- `index.html?c=1&hm=damage` — only the 2× damage patch
+- `index.html?c=1&hm=speed` — only the 1.2× attack speed patch
+- `index.html?c=1&hm=off` — pristine chapter data (normal mode, even if HARD is selected)
+- `index.html?c=1&hm=full` — everything (default)
+
+If the game ever crashes when you take a hit, try `?hm=damage` and `?hm=speed` separately and note which one still crashes — that pinpoints the culprit instantly.
 
 ## What's in this port
 
 - **All five chapters** in the browser, with a Save File Manager (export / import saves as ZIP)
-- **HARD MODE** — a persistent difficulty toggle inside the Save File Manager (or the `MODE` badge button):
-  - You take **2× damage** from enemy attacks
-  - Enemy/boss attack phases run **1.2× as fast**
-  - The choice is saved and remembered until you swap it — no prompt when starting a chapter
-  - Turn it off and the game will call you a **COWARD.** (It's waiting for you.)
+- **HARD MODE** — see above
 - **SOUL loading screens** — while a chapter downloads you get the chapter title, a pixel SOUL that fills up with real download progress, a live percentage, stage messages (`LOADING DATA` → `APPLYING HARD MODE` → `LOADING ENGINE` → `STARTING GAME`) and a **RETRY** button if the connection drops
-- **Quit button** with a proper quit screen
-- Custom site favicon
+- **Per-chapter tab titles** — the browser tab reads `Chapter 1` … `Chapter 5` while you play
+- Custom site favicon (`favicon.ico` on every page)
+- Quit button with a proper quit screen
 
 ## How HARD MODE works (technical)
 
 Hard Mode is implemented as byte-level patches to the GameMaker data files, applied in the browser right before the game boots:
 
-- `scr_damage`: damage taken by the party is doubled (`tdamage = (tdamage - defense) × 2`)
-- Every constant that starts or extends an enemy attack phase (`global.turntimer = N`) is scaled to `round(N / 1.2)`, so each phase ends after N/1.2 frames instead of N — attack phases run **1.2× as fast**. The countdown itself stays a plain integer −1 per frame: no instructions move, no branches change, no reference chains are touched.
+- **damage** — inside `scr_damage`, the `ceil(...)` call that finalises damage taken by the party is replaced by `× 2` (same instruction size, stack-neutral). The `ceil` function's reference chain is repaired accordingly (occurrence count −1, the previous link re-pointed past the removed call, per chapter).
+- **speed** — in `obj_battlecontroller`'s Step event, `global.turntimer -= 1` becomes `-= 1.2`, so attack phases count down 1.2× faster. The restructured `&&` short-circuit around it is re-emitted in an equivalent shorter form, and the `turntimer` / `reset` variable reference chains are repaired (deltas re-pointed, per chapter).
 
-The patch data is embedded in `index.html` / `onefile.html`; the original chapter archives (`chapter*.unx.part*`) are untouched. Normal Mode loads the unmodified data.
+Both components are stack-balanced, keep every branch target on an instruction boundary, and leave all FUNC/VARI reference chains walking exactly as in the original data (verified per chapter: only `scr_damage` and `obj_battlecontroller_Step_0` decode differently, and only in the patched region).
+
+The patch data is embedded in `index.html` / `onefile.html` (split into `damage` and `speed` lists per chapter); the original chapter archives (`chapter*.unx.part*`) are untouched. Normal Mode loads the unmodified data.
 
 ## Running your own copy
 
@@ -45,8 +61,6 @@ Repo layout: `index.html` + `onefile.html` (the site), `game.unx.part001` (chapt
 ## Credits
 
 - **DELTARUNE** by Toby Fox — [deltarune.com](https://deltarune.com)
-- Web port by **Kantasu**
+- Web port by **kantasu / IDIOT**
 - The GameMaker-to-web loader engineering this project started from was built by **Mollomm1**
 - *Press Start 2P* font by CodeMan38 — SIL Open Font License 1.1
-
-*Unofficial fan project. DELTARUNE and all its assets belong to Toby Fox.*

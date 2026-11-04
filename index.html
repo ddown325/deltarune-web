@@ -9,7 +9,7 @@
     <title>DELTARUNE</title>
     <meta name="title" content="DELTARUNE" />
     <meta name="description" content="Unofficial Deltarune WebPort" />
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFO0lEQVR42r1XS0/bShQ+M+kqbZjxozZCqR35oZA1C5ZXSHfVfX9PflD/AlJ1yRIEkexIwAU5TpQNRLFN0g2S/d1NbDmBtrTc9kiWEp/H950zc86MGW0KY4yBiAiAQkRsSw/GWLLWMyLCK/02DBljDAAEEUnDMI6JSNRBiCi7u7v7m4hSxli2Dka/6Ic6Ac4YKwDYhmH8I4SQnz9/Fjs7OwSgZEcPDw/06dOnLMuy9O7u7i/GWLzO6qf9AHAiKsrMiYhsz/PiIAgQBAEcxykMw9h4HMcpSr3neTERtYmo/Qt+9hqTUb/f51JK2/f9+OTkBL1eL9d1vViX6Mmj63qxv79fDAYDeJ6XeJ6XDAYD7O/vFz/y6/V6+cnJCXzfj6WUdr/f50RELVVV/x2NRuh2u3npwDkH5xyMsY2n1Hc6nSqrTqdTAW/bl3FKfbfbzUejEVRV/ZeIWm+EEO81TdOLosD9/T3TdZ3m8zkVRVGt4XqdN/6Px2N2dHQEIqL5fM6+ZVfGISLSdZ3u7+9ZURTQNE3P8/w9GYaRnJ+f55ZlQUqJ4+NjOI4DKSWklKhnVi9pPav6723bMo7jODg+PoaUEpZl4fz8PDcMIyHTNHF7ewtVVcE5x+HhIWazGZbLJaIoQqfTqYiUgbfJPKeTUqLT6SCKIiyXS8xmMxweHoJzDlVVcXt7C9M0QaZpFldXV9A0Dc1mE2dnZ0jTFIvFAgCQJAmiKIJt2xuAUkooigJFUTYqRUSwbRtRFCFJEgDAYrFAmqY4OztDs9mEpmm4urqCaZoFmaZZXF5ewjAMMMZgmiZUVcXBwQFWqxVKGY/HsG0bnHNYloUoirBYLLBYLBBFESzLAucctm1jPB5XfqvVCgcHB1BVFaZpgjEGwzBweXlZEcDNzQ00TasyaDabOD09rapQyvX1dVXWbSmX6/r6euP9YrHA6ekpms1mFV/TNNzc3MA0TbwBkGZZtiOl5EmSEBHR4+Mjffz4kd6+fUtfvnwhKSVJKWl3d5cYY9VOz/OciIgajQYBIMYY7e7uEhFRmqaUpikdHR3R169f6fHxkTjnREQkpaQsywoADySEcHzfT8IwhKIoxXO72LZtTKdTTCYTtFot7O3tIY7jKss4jrG3t4dWq4XJZILpdArbtp/tIkVRijAM4ft+IoRw6oMod1232B4+ZQBFUdBqtaqWsywL0+kU0+kUlmVV7dhqtaAoCp4bTJxzuK5bjEajvBxE1O/3uRCi43neKgiCJ1WoEynXsd5q2y1at9luTUVRivV5sBJCdPr9Pi8n1jtN08ZhGG5Uod5arutiOBzCcZwns6D87TgOhsMhXNd9MiPK7MMwzDVNGxPRu3JasloVlkEQFFLKoj7HXdfFbDYDAMxmM7iuW+leYsMYg5SyCIKg8DxvWWW/vg6wWhWiIAiqQ4kxBiEELi4ukKYp5vM50jTFcDiElLIqs5QSw+Fww+bi4gJCiKo63W43D4IAmqZFteyrCxHbPpZ938+JCI1GA7quV5NPSgkhxJNRLITYsNF1HY1GA0QE3/efO4a3r23VC6vX68WDwaAi8T2w75EqwQeDAXq9XkxE1jNXwQ3h69I8IdFoNDbKnWUZ5vM55vM5sizbWJZ65nXwdWxOP5Bvknhuwz236V4D/iISRIR2u404jhHHMdrt9sa94LXgLyZRH0T/N/iLSfxO8BdtzNduuFeT+BPg3yThOE7uOM4fAd8mYXueNwnDEGEYwvO8Se1r57eBb5P4YBhGZBhGREQf/hR4/UuaiEghImX7YPkZ+Q8xgsd7Y67jgAAAAABJRU5ErkJggg==" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -575,6 +575,23 @@ progress[value]::-webkit-progress-value {
                 letter-spacing: 0.28em; text-indent: 0.28em;
             }
             #drHard[hidden] { display: none; }
+            /* ---- hard mode toggle: chapter select, under the (C) line ---- */
+            #drModeBar {
+                position: fixed; z-index: 40000;
+                display: flex; align-items: center; gap: 22px;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #fff; letter-spacing: 0.12em;
+                user-select: none; -webkit-user-select: none;
+                text-shadow: 1px 1px 0 #000;
+            }
+            #drModeBar[hidden] { display: none; }
+            .dr-mb-label { color: #9a9a9a; }
+            .dr-mb-opt { display: inline-flex; align-items: center; padding: 5px 2px; cursor: pointer; }
+            .dr-mb-opt .soul-slot { width: 17px; margin-right: 7px; visibility: hidden; }
+            .dr-mb-opt.active { color: #ffff00; }
+            .dr-mb-opt.active .soul-slot { visibility: visible; }
+            .dr-mb-opt:hover, .dr-mb-opt:focus-visible { color: #ffff00; outline: none; }
+
             #drRetry {
                 margin-top: 30px;
                 font-family: 'Press Start 2P', monospace;
@@ -654,10 +671,20 @@ progress[value]::-webkit-progress-value {
             <button id="drRetry" type="button" hidden>RETRY</button>
         </div>
         <div class="dr-bottom">
-            <span>port by Kantasu</span>
+            <span>kantasu / IDIOT</span>
             <a id="drSiteLink" href="onefile.html">onefile version</a>
         </div>
     </div>
+    <div id="drModeBar" hidden>
+        <span class="dr-mb-label">MODE</span>
+        <span class="dr-mb-opt" id="drModeNormal" role="button" tabindex="0" aria-pressed="true">
+            <span class="soul-slot"><svg class="dr-soul" viewBox="0 0 11 10" width="16.5" height="15" shape-rendering="crispEdges" aria-hidden="true"><g fill="#ff0000"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g></svg></span>NORMAL
+        </span>
+        <span class="dr-mb-opt" id="drModeHard" role="button" tabindex="0" aria-pressed="false">
+            <span class="soul-slot"><svg class="dr-soul" viewBox="0 0 11 10" width="16.5" height="15" shape-rendering="crispEdges" aria-hidden="true"><g fill="#ff0000"><rect x="2" y="0" width="2" height="1"/><rect x="7" y="0" width="2" height="1"/><rect x="1" y="1" width="4" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="0" y="2" width="11" height="3"/><rect x="1" y="5" width="9" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="5" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="5" y="9" width="1" height="1"/></g></svg></span>HARD
+        </span>
+    </div>
+
     <div id="quit-overlay">
         <div class="diff-title">QUIT  THE  GAME?</div>
         <div class="diff-optwrap">
@@ -757,11 +784,14 @@ progress[value]::-webkit-progress-value {
             })();
 
             // ============ HARD MODE (native in-game toggle) ============
-            // Byte patches per chapter (2x damage via scr_damage, 1.2x enemy
-            // attack speed via obj_battlecontroller turntimer). Verified
-            // against the original chapter files: instruction streams, jump
-            // targets and variable/function chains all stay intact.
-            window.HARD_MODE_PATCHES = {"1":[[2571720,2],[2571722,15],[2571723,132],[2571724,0],[2571726,85],[2571727,8],[3490112,24],[3490116,0],[3490118,0],[3490119,192],[3490120,51],[3490121,51],[3490122,51],[3490123,51],[3490124,51],[3490125,51],[3490126,243],[3490127,63],[3490128,0],[3490130,80],[3490131,13],[3490134,85],[3490135,69],[3490136,8],[3490137,0],[3490140,251],[3490141,255],[3490142,5],[3490143,194],[3490144,100],[3490145,56],[3490146,0],[3490147,160],[3490148,0],[3490150,15],[3490151,132],[3490152,0],[3490153,2],[3490154,82],[3490155,21],[3490156,56],[3490159,184],[3490160,255],[3490161,255],[3490162,5],[3490163,192],[3490164,156],[3490165,0],[3490166,0],[3490167,160],[3490168,0],[3490170,15],[3490171,132],[3490173,3],[3490174,82],[3490175,21],[3474748,56],[2466944,188],[4207540,33]],"2":[[6424236,2],[6424238,15],[6424239,132],[6424240,0],[6424242,85],[6424243,8],[6425720,2],[6425722,15],[6425723,132],[6425724,0],[6425726,85],[6425727,8],[7948524,24],[7948528,0],[7948530,0],[7948531,192],[7948532,51],[7948533,51],[7948534,51],[7948535,51],[7948536,51],[7948537,51],[7948538,243],[7948539,63],[7948540,0],[7948542,80],[7948543,13],[7948546,85],[7948547,69],[7948548,8],[7948549,0],[7948552,251],[7948553,255],[7948554,5],[7948555,194],[7948556,92],[7948557,104],[7948558,0],[7948559,160],[7948560,0],[7948562,15],[7948563,132],[7948564,0],[7948565,2],[7948566,82],[7948567,21],[7948568,56],[7948571,184],[7948572,255],[7948573,255],[7948574,5],[7948575,192],[7948576,156],[7948577,0],[7948578,0],[7948579,160],[7948580,0],[7948582,15],[7948583,132],[7948585,3],[7948586,82],[7948587,21],[7928616,248],[6185264,20],[6185265,166],[6424456,76],[6424457,5],[11508348,117]],"3":[[6993976,2],[6993978,15],[6993979,132],[6993980,0],[6993981,0],[6993982,85],[6993983,8],[6996676,2],[6996678,15],[6996679,132],[6996680,0],[6996681,0],[6996682,85],[6996683,8],[12170436,24],[12170440,0],[12170442,0],[12170443,192],[12170444,51],[12170445,51],[12170446,51],[12170447,51],[12170448,51],[12170449,51],[12170450,243],[12170451,63],[12170452,0],[12170454,80],[12170455,13],[12170458,85],[12170459,69],[12170460,8],[12170461,0],[12170464,251],[12170465,255],[12170466,5],[12170467,194],[12170468,28],[12170469,190],[12170470,0],[12170471,160],[12170472,0],[12170474,15],[12170475,132],[12170476,0],[12170477,2],[12170478,82],[12170479,21],[12170480,56],[12170483,184],[12170484,255],[12170485,255],[12170486,5],[12170487,192],[12170488,156],[12170489,0],[12170490,0],[12170491,160],[12170492,0],[12170494,15],[12170495,132],[12170497,3],[12170498,82],[12170499,21],[12143232,120],[6677908,104],[6677909,213],[6994772,196],[6994773,9],[13956468,98]],"4":[[17723368,2],[17723370,15],[17723371,132],[17723372,0],[17723374,85],[17723375,8],[17726620,2],[17726622,15],[17726623,132],[17726624,0],[17726626,85],[17726627,8],[23324780,24],[23324784,0],[23324786,0],[23324787,192],[23324788,51],[23324789,51],[23324790,51],[23324791,51],[23324792,51],[23324793,51],[23324794,243],[23324795,63],[23324796,0],[23324798,80],[23324799,13],[23324802,85],[23324803,69],[23324804,8],[23324805,0],[23324808,251],[23324809,255],[23324810,5],[23324811,194],[23324812,48],[23324813,8],[23324814,0],[23324815,160],[23324816,0],[23324818,15],[23324819,132],[23324820,0],[23324821,2],[23324822,82],[23324823,21],[23324824,56],[23324827,184],[23324828,255],[23324829,255],[23324830,5],[23324831,192],[23324832,156],[23324833,0],[23324834,0],[23324835,160],[23324836,0],[23324838,15],[23324839,132],[23324841,3],[23324842,82],[23324843,21],[23301144,136],[17396944,176],[17723708,188],[25397276,137]],"5":[[11843196,2],[11843198,15],[11843199,132],[11843200,0],[11843202,85],[11843203,8],[11845132,2],[11845134,15],[11845135,132],[11845136,0],[11845138,85],[11845139,8],[19092216,24],[19092220,0],[19092222,0],[19092223,192],[19092224,51],[19092225,51],[19092226,51],[19092227,51],[19092228,51],[19092229,51],[19092230,243],[19092231,63],[19092232,0],[19092234,80],[19092235,13],[19092238,85],[19092239,69],[19092240,8],[19092241,0],[19092244,251],[19092245,255],[19092246,5],[19092247,194],[19092248,144],[19092249,177],[19092250,0],[19092251,160],[19092252,0],[19092254,15],[19092255,132],[19092256,0],[19092257,2],[19092258,82],[19092259,21],[19092260,82],[19092263,184],[19092264,255],[19092265,255],[19092266,5],[19092267,192],[19092268,156],[19092269,0],[19092270,0],[19092271,160],[19092272,0],[19092274,15],[19092275,132],[19092277,3],[19092278,82],[19092279,21],[19067888,60],[11843120,196],[11845056,168],[21547244,192]]};
+            // Byte patches per chapter, split into two independently
+            // selectable components: "damage" (2x damage via scr_damage)
+            // and "speed" (1.2x enemy attack speed via obj_battlecontroller
+            // turntimer). Verified against the original chapter files:
+            // instruction streams, jump targets and variable/function
+            // reference chains all stay intact. ?hm=damage / ?hm=speed
+            // loads only one component; ?hm=off disables patching.
+            window.HARD_MODE_PATCHES = {"1":{"damage":[[2571720,2],[2571722,15],[2571723,132],[2571724,0],[2571726,85],[2571727,8],[2466944,188],[4207540,33]],"speed":[[3490112,24],[3490116,0],[3490118,0],[3490119,192],[3490120,51],[3490121,51],[3490122,51],[3490123,51],[3490124,51],[3490125,51],[3490126,243],[3490127,63],[3490128,0],[3490130,80],[3490131,13],[3490134,85],[3490135,69],[3490136,8],[3490137,0],[3490140,251],[3490141,255],[3490142,5],[3490143,194],[3490144,100],[3490145,56],[3490146,0],[3490147,160],[3490148,0],[3490150,15],[3490151,132],[3490152,0],[3490153,2],[3490154,82],[3490155,21],[3490156,56],[3490159,184],[3490160,255],[3490161,255],[3490162,5],[3490163,192],[3490164,156],[3490165,0],[3490166,0],[3490167,160],[3490168,0],[3490170,15],[3490171,132],[3490173,3],[3490174,82],[3490175,21],[3474748,56]]},"2":{"damage":[[6424236,2],[6424238,15],[6424239,132],[6424240,0],[6424242,85],[6424243,8],[6425720,2],[6425722,15],[6425723,132],[6425724,0],[6425726,85],[6425727,8],[6185264,20],[6185265,166],[6424456,76],[6424457,5],[11508348,117]],"speed":[[7948524,24],[7948528,0],[7948530,0],[7948531,192],[7948532,51],[7948533,51],[7948534,51],[7948535,51],[7948536,51],[7948537,51],[7948538,243],[7948539,63],[7948540,0],[7948542,80],[7948543,13],[7948546,85],[7948547,69],[7948548,8],[7948549,0],[7948552,251],[7948553,255],[7948554,5],[7948555,194],[7948556,92],[7948557,104],[7948558,0],[7948559,160],[7948560,0],[7948562,15],[7948563,132],[7948564,0],[7948565,2],[7948566,82],[7948567,21],[7948568,56],[7948571,184],[7948572,255],[7948573,255],[7948574,5],[7948575,192],[7948576,156],[7948577,0],[7948578,0],[7948579,160],[7948580,0],[7948582,15],[7948583,132],[7948585,3],[7948586,82],[7948587,21],[7928616,248]]},"3":{"damage":[[6993976,2],[6993978,15],[6993979,132],[6993980,0],[6993981,0],[6993982,85],[6993983,8],[6996676,2],[6996678,15],[6996679,132],[6996680,0],[6996681,0],[6996682,85],[6996683,8],[6677908,104],[6677909,213],[6994772,196],[6994773,9],[13956468,98]],"speed":[[12170436,24],[12170440,0],[12170442,0],[12170443,192],[12170444,51],[12170445,51],[12170446,51],[12170447,51],[12170448,51],[12170449,51],[12170450,243],[12170451,63],[12170452,0],[12170454,80],[12170455,13],[12170458,85],[12170459,69],[12170460,8],[12170461,0],[12170464,251],[12170465,255],[12170466,5],[12170467,194],[12170468,28],[12170469,190],[12170470,0],[12170471,160],[12170472,0],[12170474,15],[12170475,132],[12170476,0],[12170477,2],[12170478,82],[12170479,21],[12170480,56],[12170483,184],[12170484,255],[12170485,255],[12170486,5],[12170487,192],[12170488,156],[12170489,0],[12170490,0],[12170491,160],[12170492,0],[12170494,15],[12170495,132],[12170497,3],[12170498,82],[12170499,21],[12143232,120]]},"4":{"damage":[[17723368,2],[17723370,15],[17723371,132],[17723372,0],[17723374,85],[17723375,8],[17726620,2],[17726622,15],[17726623,132],[17726624,0],[17726626,85],[17726627,8],[17396944,176],[17723708,188],[25397276,137]],"speed":[[23324780,24],[23324784,0],[23324786,0],[23324787,192],[23324788,51],[23324789,51],[23324790,51],[23324791,51],[23324792,51],[23324793,51],[23324794,243],[23324795,63],[23324796,0],[23324798,80],[23324799,13],[23324802,85],[23324803,69],[23324804,8],[23324805,0],[23324808,251],[23324809,255],[23324810,5],[23324811,194],[23324812,48],[23324813,8],[23324814,0],[23324815,160],[23324816,0],[23324818,15],[23324819,132],[23324820,0],[23324821,2],[23324822,82],[23324823,21],[23324824,56],[23324827,184],[23324828,255],[23324829,255],[23324830,5],[23324831,192],[23324832,156],[23324833,0],[23324834,0],[23324835,160],[23324836,0],[23324838,15],[23324839,132],[23324841,3],[23324842,82],[23324843,21],[23301144,136]]},"5":{"damage":[[11843196,2],[11843198,15],[11843199,132],[11843200,0],[11843202,85],[11843203,8],[11845132,2],[11845134,15],[11845135,132],[11845136,0],[11845138,85],[11845139,8],[11843120,196],[11845056,168],[21547244,192]],"speed":[[19092216,24],[19092220,0],[19092222,0],[19092223,192],[19092224,51],[19092225,51],[19092226,51],[19092227,51],[19092228,51],[19092229,51],[19092230,243],[19092231,63],[19092232,0],[19092234,80],[19092235,13],[19092238,85],[19092239,69],[19092240,8],[19092241,0],[19092244,251],[19092245,255],[19092246,5],[19092247,194],[19092248,144],[19092249,177],[19092250,0],[19092251,160],[19092252,0],[19092254,15],[19092255,132],[19092256,0],[19092257,2],[19092258,82],[19092259,21],[19092260,82],[19092263,184],[19092264,255],[19092265,255],[19092266,5],[19092267,192],[19092268,156],[19092269,0],[19092270,0],[19092271,160],[19092272,0],[19092274,15],[19092275,132],[19092277,3],[19092278,82],[19092279,21],[19067888,60]]}};
             // 2x damage + 1.2x enemy attack speed, applied to the chapter file
             // when it loads. Selected on the chapter select screen with [H];
             // the game itself draws the current mode in its version line.
@@ -774,8 +804,8 @@ progress[value]::-webkit-progress-value {
             // chapter select). Original is 24 bytes; replacements are exactly
             // 24 bytes too, so only content bytes ever change.
             const MODE_TEXT_ORIG = 'DR Web Port By Kantasu  ';
-            const MODE_TEXT_HARD = 'DR WEB PORT: HARD MODE  ';
-            const MODE_TEXT_NORMAL = 'DR WEB PORT: NORMAL MODE';
+            const MODE_TEXT_HARD = 'kantasu / IDIOT [HARD]  ';
+            const MODE_TEXT_NORMAL = 'kantasu / IDIOT         ';
             function modeTextFor(on) { return on ? MODE_TEXT_HARD : MODE_TEXT_NORMAL; }
             function modeTextBytes() {
                 const t = modeTextFor(hardModeActive);
@@ -1475,6 +1505,20 @@ window.GM_RUNNER_SCRIPT = `runner${activeDeltaruneChapter}.js`;
 window.GM_EXTERNAL_FILES = deltaruneManifestFiles[activeDeltaruneChapter];
 window.GM_CHAPTER_ASSET_PREFIX = activeDeltaruneChapter === "0" ? "" : `chapter${activeDeltaruneChapter}_windows`;
 window.GM_CHAPTER_EXTERNAL_FILES = deltaruneChapterExternalFiles[activeDeltaruneChapter];
+            // per-chapter tab title ('Chapter 1'..'Chapter 5'); the
+            // property is hooked so the engine can never reset it
+            (function () {
+                const want = activeDeltaruneChapter === '0' ? 'DELTARUNE' : 'Chapter ' + activeDeltaruneChapter;
+                try {
+                    Object.defineProperty(document, 'title', {
+                        configurable: true,
+                        get: function () { return want; },
+                        set: function () { /* keep ours */ }
+                    });
+                } catch (e) { /* older engines: plain assignment */ }
+                document.title = want;
+            })();
+
 if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapter; loading chapter select.", requestedChapter);
             if (window.DRLoading) DRLoading.init(
                 activeDeltaruneChapter === "0" ? "CHAPTER SELECT" : "CHAPTER " + activeDeltaruneChapter,
@@ -1523,6 +1567,27 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 }
                 return originalOpen.call(this, method, newUrl, ...rest);
             };
+            // ---- hard mode patch selection (?hm=full|damage|speed|off) ----
+            // Lets you bisect a crash: ?c=1&hm=damage applies only the
+            // 2x-damage patch, ?c=1&hm=speed only the 1.2x attack-speed
+            // patch, ?hm=off loads the pristine chapter data.
+            const HM_MODE = (new URLSearchParams(window.location.search).get('hm') || 'full').toLowerCase();
+            function selectedHardModeBytes() {
+                if (!hardModeActive) return [];
+                const p = window.HARD_MODE_PATCHES && window.HARD_MODE_PATCHES[activeDeltaruneChapter];
+                if (!p) return [];
+                if (HM_MODE === 'off' || HM_MODE === 'normal' || HM_MODE === '0') return [];
+                const keys = HM_MODE === 'damage' ? ['damage'] : HM_MODE === 'speed' ? ['speed'] : ['damage', 'speed'];
+                let out = [];
+                for (const k of keys) out = out.concat(p[k] || []);
+                return out;
+            }
+            function HM_LOG_MESSAGE() {
+                if (HM_MODE === 'damage') return 'HARD MODE (?hm=damage): you take 2x damage. Attack speed unchanged.';
+                if (HM_MODE === 'speed') return 'HARD MODE (?hm=speed): enemy attacks run 1.2x as fast. Damage unchanged.';
+                return 'HARD MODE active: you take 2x damage, enemy attacks run 1.2x as fast. (?hm=damage or ?hm=speed to test one part)';
+            }
+
             
             async function startRunner() {
                 if (window.DRLoading) DRLoading.stage("LOADING DATA");
@@ -1557,19 +1622,22 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     for (const part of archiveParts) { bytes0.set(new Uint8Array(part), pos0); pos0 += part.byteLength; }
                     applyModeTextPatch(bytes0);
                     gameUnxUrl = URL.createObjectURL(new Blob([bytes0], { type: 'application/octet-stream' }));
-                } else if (hardModeActive && window.HARD_MODE_PATCHES[activeDeltaruneChapter]) {
-                    if (window.DRLoading) DRLoading.stage("APPLYING HARD MODE");
-                    const totalLen = archiveParts.reduce((s, b) => s + b.byteLength, 0);
-                    const bytes = new Uint8Array(totalLen);
-                    let pos = 0;
-                    for (const part of archiveParts) { bytes.set(new Uint8Array(part), pos); pos += part.byteLength; }
-                    for (const [off, val] of window.HARD_MODE_PATCHES[activeDeltaruneChapter]) bytes[off] = val;
-                    gameUnxUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
-                    await new Promise((r) => setTimeout(r, 400));
-                    console.log("HARD MODE active: you take 2x damage, enemy attacks run 1.2x as fast.");
                 } else {
-                    gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
-                }
+                    const hmBytes = selectedHardModeBytes();
+                    if (hmBytes.length) {
+                        if (window.DRLoading) DRLoading.stage("APPLYING HARD MODE");
+                        const totalLen = archiveParts.reduce((s, b) => s + b.byteLength, 0);
+                        const bytes = new Uint8Array(totalLen);
+                        let pos = 0;
+                        for (const part of archiveParts) { bytes.set(new Uint8Array(part), pos); pos += part.byteLength; }
+                        for (const [off, val] of hmBytes) bytes[off] = val;
+                        gameUnxUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+                        await new Promise((r) => setTimeout(r, 400));
+                        console.log(HM_LOG_MESSAGE());
+                    } else {
+                        gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
+                    }
+                    }
 
                 if (window.DRLoading) DRLoading.stage("LOADING ENGINE");
                 const runnerScript = document.createElement("script");
@@ -1577,6 +1645,57 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 document.body.appendChild(runnerScript);
                 console.log("File interception is active. Starting the game...");
             }
+            // ---- visible MODE toggle (chapter select, below the (C) line) ----
+            (function () {
+                if (activeDeltaruneChapter !== '0') return;
+                const bar = document.getElementById('drModeBar');
+                const optN = document.getElementById('drModeNormal');
+                const optH = document.getElementById('drModeHard');
+                if (!bar || !optN || !optH) return;
+                function render() {
+                    optN.classList.toggle('active', !hardModeActive);
+                    optH.classList.toggle('active', !!hardModeActive);
+                    optN.setAttribute('aria-pressed', String(!hardModeActive));
+                    optH.setAttribute('aria-pressed', String(!!hardModeActive));
+                }
+                function pick(hard, ev) {
+                    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+                    if (!!hard !== hardModeActive) window.DRHardMode.toggle();
+                    render();
+                }
+                optN.addEventListener('click', function (e) { pick(false, e); });
+                optH.addEventListener('click', function (e) { pick(true, e); });
+                [optN, optH].forEach(function (el) {
+                    el.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') pick(el === optH, e);
+                    });
+                });
+                // stay in sync with the [H] hotkey
+                const origToggle = window.DRHardMode.toggle.bind(window.DRHardMode);
+                window.DRHardMode.toggle = function () { origToggle(); render(); };
+                render();
+                // anchor to the game canvas: centered on its bottom edge
+                function place() {
+                    if (window.DRLoading && !window.DRLoading.visible) bar.hidden = false;
+                    if (bar.hidden) return;
+                    const c = document.getElementById('canvas');
+                    if (!c) return;
+                    const r = c.getBoundingClientRect();
+                    if (r.width < 2) return;
+                    const h = bar.offsetHeight || 18;
+                    bar.style.left = Math.round(r.left + r.width / 2 - bar.offsetWidth / 2) + 'px';
+                    bar.style.top = Math.round(r.bottom - h - Math.max(6, r.height * 0.025)) + 'px';
+                }
+                setInterval(place, 400);
+                window.addEventListener('resize', place);
+                window.addEventListener('orientationchange', place);
+                if (window.DRLoading) {
+                    const origHide = window.DRLoading.hide.bind(window.DRLoading);
+                    window.DRLoading.hide = function () { origHide(); place(); };
+                }
+                place();
+            })();
+
 
             startRunner().catch((error) => {
                 console.error("Unable to prepare game archive:", error);
