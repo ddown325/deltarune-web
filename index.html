@@ -731,6 +731,7 @@ progress[value]::-webkit-progress-value {
                     // mirror the GameMaker loader status, cleaned up like the UT port
                     statusText: function (t) {
                         if (!this.visible || !t) return;
+                        window.DRLastEngineStatus = String(t);
                         t = String(t).replace(/[\s.]*\d+%\s*$/, '').replace(/\.+$/, '').trim();
                         if (!t) return;
                         var map = [
@@ -1598,6 +1599,11 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 return `${chapterAssetPrefix}/${path}${suffix}`;
             }
             
+            // v7: cache-bust query for the data files, so a stale/corrupt copy
+            // cached by a proxy never reaches the engine (GitHub Pages serves
+            // the same bytes for any query string)
+            const RUNNER_QS = '?v=7';
+
             // --- Interception Logic ---
             // Intercept 'fetch' requests
             const originalFetch = window.fetch;
@@ -1605,7 +1611,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 if (url.endsWith("game.unx")) {
                     return originalFetch(gameUnxUrl, ...args);
                 } else if (url.endsWith("runner.data")) {
-                    return originalFetch(runnerDataUrl, ...args);
+                    return originalFetch(runnerDataUrl + RUNNER_QS, ...args);
                 }
                 return originalFetch(resolveChapterAssetUrl(url), ...args);
             };
@@ -1617,7 +1623,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 if (url.endsWith("game.unx")) {
                     newUrl = gameUnxUrl;
                 } else if (url.endsWith("runner.data")) {
-                    newUrl = runnerDataUrl;
+                    newUrl = runnerDataUrl + RUNNER_QS;
                 } else {
                     newUrl = resolveChapterAssetUrl(url);
                 }
@@ -1647,28 +1653,65 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             
             async function startRunner() {
                 if (window.DRLoading) DRLoading.stage("LOADING DATA");
+                // v7: robust chunk download. A stalled or truncated chunk used to
+                // be handed straight to the engine as game.unx, and the engine's
+                // loader then hangs forever at "LOADING ENGINE" with no error
+                // anywhere. Now: a chunk that stops sending data for 30s is
+                // aborted and refetched (up to 3 tries), and the received size
+                // must match Content-Length when the server sent one.
                 let archiveTotal = 0;
-                const archiveParts = await Promise.all(gameArchiveChunks.map(async (chunkUrl) => {
-                    const response = await originalFetch(chunkUrl);
-                    if (!response.ok) throw new Error(`Unable to load archive chunk: ${chunkUrl}`);
-                    const lenHeader = +(response.headers.get('Content-Length') || 0);
-                    if (lenHeader) { archiveTotal += lenHeader; if (window.DRLoading) DRLoading.setArchiveTotals(archiveTotal); }
-                    if (!response.body || !window.DRLoading) return response.arrayBuffer();
-                    // stream the chunk so the SOUL fills up with real progress
-                    const reader = response.body.getReader();
-                    const parts = [];
-                    for (;;) {
-                        const r = await reader.read();
-                        if (r.done) break;
-                        parts.push(r.value);
-                        DRLoading.addLoaded(r.value.byteLength);
+                const countedChunks = new Set();
+                async function fetchChunkOnce(chunkUrl) {
+                    const ac = new AbortController();
+                    let stallTimer = null;
+                    const armStall = () => {
+                        if (stallTimer) clearTimeout(stallTimer);
+                        stallTimer = setTimeout(() => { try { ac.abort(); } catch (e) {} }, 30000);
+                    };
+                    armStall();
+                    try {
+                        const response = await originalFetch(chunkUrl + RUNNER_QS, { signal: ac.signal });
+                        if (!response.ok) throw new Error(`HTTP ${response.status} for ${chunkUrl}`);
+                        const lenHeader = +(response.headers.get('Content-Length') || 0);
+                        if (lenHeader && !countedChunks.has(chunkUrl)) {
+                            countedChunks.add(chunkUrl);
+                            archiveTotal += lenHeader;
+                            if (window.DRLoading) DRLoading.setArchiveTotals(archiveTotal);
+                        }
+                        if (!response.body || !window.DRLoading) return (await response.arrayBuffer());
+                        // stream the chunk so the SOUL fills up with real progress
+                        const reader = response.body.getReader();
+                        const parts = [];
+                        for (;;) {
+                            const r = await reader.read();
+                            if (r.done) break;
+                            parts.push(r.value);
+                            DRLoading.addLoaded(r.value.byteLength);
+                            armStall();
+                        }
+                        const size = parts.reduce((s, c) => s + c.byteLength, 0);
+                        if (lenHeader && size !== lenHeader) throw new Error(`chunk truncated (${size} of ${lenHeader} bytes): ${chunkUrl}`);
+                        const out = new Uint8Array(size);
+                        let p = 0;
+                        for (const c of parts) { out.set(c, p); p += c.byteLength; }
+                        return out.buffer;
+                    } finally {
+                        if (stallTimer) clearTimeout(stallTimer);
                     }
-                    const size = parts.reduce((s, c) => s + c.byteLength, 0);
-                    const out = new Uint8Array(size);
-                    let p = 0;
-                    for (const c of parts) { out.set(c, p); p += c.byteLength; }
-                    return out.buffer;
-                }));
+                }
+                async function fetchChunkRobust(chunkUrl) {
+                    let lastErr = null;
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try { return await fetchChunkOnce(chunkUrl); }
+                        catch (e) {
+                            lastErr = e;
+                            if (window.DRLoading) DRLoading.stage(`RETRYING DOWNLOAD ${attempt}/3`);
+                            await new Promise((r) => setTimeout(r, 800 * attempt));
+                        }
+                    }
+                    throw lastErr;
+                }
+                const archiveParts = await Promise.all(gameArchiveChunks.map((chunkUrl) => fetchChunkRobust(chunkUrl)));
                 if (activeDeltaruneChapter === '0') {
                     // chapter select: bake the mode text into the game's own
                     // version line (bottom-left). The MODE selector itself is
@@ -1699,14 +1742,51 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     }
 
                 if (window.DRLoading) DRLoading.stage("LOADING ENGINE");
+                // v7: WebGL pre-check. If the browser blocks WebGL the runner
+                // dies mid-boot (after the overlay already hid), leaving a silent
+                // black screen. Fail loudly instead.
+                try {
+                    const glProbe = document.createElement('canvas');
+                    const gl = glProbe.getContext('webgl') || glProbe.getContext('experimental-webgl');
+                    if (!gl) {
+                        if (window.DRLoading) DRLoading.fail("WEBGL BLOCKED - ENABLE HARDWARE ACCELERATION");
+                        return;
+                    }
+                } catch (e) { /* fall through and let the engine try */ }
                 const runnerScript = document.createElement("script");
-                runnerScript.src = runnerScriptUrl;
+                runnerScript.src = runnerScriptUrl + RUNNER_QS;
                 document.body.appendChild(runnerScript);
                 console.log("File interception is active. Starting the game...");
+                // v7: engine watchdog. If the engine never logs "Success Loaded
+                // game file" / "Entering main loop", say so on the overlay
+                // instead of spinning at LOADING ENGINE forever.
+                window.DREngineAlive = false;
+                const engineT0 = Date.now();
+                let engineWarned = false;
+                const engineWatchdog = setInterval(() => {
+                    if (window.DREngineAlive) { clearInterval(engineWatchdog); return; }
+                    if (!window.DRLoading || !window.DRLoading.visible) { clearInterval(engineWatchdog); return; }
+                    const secs = Math.round((Date.now() - engineT0) / 1000);
+                    if (!engineWarned && secs >= 75) {
+                        engineWarned = true;
+                        DRLoading.stage("ENGINE SLOW - STILL WORKING...");
+                    } else if (secs >= 180) {
+                        clearInterval(engineWatchdog);
+                        console.error("ENGINE BOOT STUCK after " + secs + "s - last engine status: "
+                            + (window.DRLastEngineStatus || 'none')
+                            + " - please screenshot this console (F12) and report it.");
+                        DRLoading.fail("ENGINE STUCK (" + secs + "S) - CHECK CONSOLE");
+                    }
+                }, 2500);
+                window.addEventListener('error', function (ev) {
+                    if (window.DRLoading && window.DRLoading.visible && ev && ev.message) {
+                        DRLoading.fail(String(ev.message).slice(0, 60).toUpperCase());
+                    }
+                });
             }
             startRunner().catch((error) => {
                 console.error("Unable to prepare game archive:", error);
-                Module.setStatus("Unable to load game archive.");
+                try { Module.setStatus("Unable to load game archive."); } catch (e) {}
                 if (window.DRLoading) DRLoading.fail("DOWNLOAD FAILED");
             });
         </script>
@@ -2113,7 +2193,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             }
         </script>
         <script>
-		window.addEventListener('load', () => {
+                window.addEventListener('load', () => {
 
     function isMobileDevice() {
 
@@ -2438,6 +2518,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 
                 if (typeof message === 'string') {
                     if (message.startsWith('Success Loaded game file') || message.indexOf('Entering main loop') >= 0) {
+                        window.DREngineAlive = true;
                         if (window.DRLoading) { window.DRLoading.hide(); }
                         else if (loadingOverlay) { loadingOverlay.style.display = 'none'; }
                     }

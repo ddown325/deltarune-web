@@ -53,6 +53,15 @@ The chapter archives (`chapter*.unx.part*`) are untouched on disk; Normal Mode l
 
 > History: v5 briefly shipped a fully native in-game MODE choice (an injected `obj_ui_choice` installed by patched console-init code). It hung the game at boot, so v6 reverted it — the chapter-select data file is now byte-identical to the original apart from the 21-byte version-line text.
 
+### Boot robustness (v7)
+
+The boot path never fails silently any more. Every failure mode now either self-heals or shows a message on the loading screen:
+
+- **Chunk downloads** are streamed with a 30-second stall watchdog, verified against `Content-Length`, and retried up to 3 times — a stalled or truncated chunk can no longer reach the engine (which used to hang forever at `LOADING ENGINE` with no error anywhere).
+- **WebGL pre-check** — if the browser blocks WebGL (hardware acceleration off, broken driver), the loading screen says `WEBGL BLOCKED - ENABLE HARDWARE ACCELERATION` instead of dying to a black screen mid-boot.
+- **Engine watchdog** — if the engine doesn't reach `Entering main loop` within 3 minutes, the loading screen says `ENGINE STUCK (ns) - CHECK CONSOLE` and the console carries a reportable line with the engine's last status; page errors during boot are surfaced on the loading screen too.
+- **Cache-busting** — the runner script, runner data and archive chunks are fetched with `?v=7`, so a stale copy poisoned into a proxy cache can't reach the engine either.
+
 ## Running your own copy
 
 Everything is static — no build step, no server code:
