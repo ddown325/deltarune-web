@@ -1604,6 +1604,10 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             // cached by a proxy never reaches the engine (GitHub Pages serves
             // the same bytes for any query string)
             const RUNNER_QS = '?v=7';
+            // v7.1: robustly prefetched copies of the engine's own files; when
+            // set, the engine is served these blob URLs instead of the network
+            let runnerDataBlobUrl = null;
+            let runnerWasmBlobUrl = null;
 
             // --- Interception Logic ---
             // Intercept 'fetch' requests
@@ -1612,11 +1616,13 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 if (url.endsWith("game.unx")) {
                     return originalFetch(gameUnxUrl, ...args);
                 } else if (url.endsWith("runner.data")) {
-                    return originalFetch(runnerDataUrl + RUNNER_QS, ...args);
+                    return originalFetch(runnerDataBlobUrl || (runnerDataUrl + RUNNER_QS), ...args);
+                } else if (url.endsWith("runner.wasm")) {
+                    return originalFetch(runnerWasmBlobUrl || ('runner.wasm' + RUNNER_QS), ...args);
                 }
                 return originalFetch(resolveChapterAssetUrl(url), ...args);
             };
-            
+
             // Intercept 'XMLHttpRequest' requests
             const originalOpen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function (method, url, ...rest) {
@@ -1624,7 +1630,9 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 if (url.endsWith("game.unx")) {
                     newUrl = gameUnxUrl;
                 } else if (url.endsWith("runner.data")) {
-                    newUrl = runnerDataUrl + RUNNER_QS;
+                    newUrl = runnerDataBlobUrl || (runnerDataUrl + RUNNER_QS);
+                } else if (url.endsWith("runner.wasm")) {
+                    newUrl = runnerWasmBlobUrl || ('runner.wasm' + RUNNER_QS);
                 } else {
                     newUrl = resolveChapterAssetUrl(url);
                 }
@@ -1654,15 +1662,27 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             
             async function startRunner() {
                 if (window.DRLoading) DRLoading.stage("LOADING DATA");
-                // v7: robust chunk download. A stalled or truncated chunk used to
-                // be handed straight to the engine as game.unx, and the engine's
-                // loader then hangs forever at "LOADING ENGINE" with no error
-                // anywhere. Now: a chunk that stops sending data for 30s is
-                // aborted and refetched (up to 3 tries), and the received size
-                // must match Content-Length when the server sent one.
+                // v7.1: ranged, resumable, self-verifying chunk download. The CDN
+                // intermittently closes a big download early - the browser then
+                // sees a clean-but-short body, and in v6 and earlier that
+                // truncated file was assembled into game.unx and handed to the
+                // engine, which hangs forever at LOADING ENGINE with no error
+                // anywhere. Now: bytes already received are kept (Range resume),
+                // every attempt is cache-busted, a 30s stall aborts, the result
+                // must reach the exact file size, and persistent failures end
+                // in DOWNLOAD FAILED + RETRY instead of a silent engine hang.
+            // v7.2: exact expected sizes of every data file (ground truth from
+            // the repo) - the downloader resumes/verifies against THESE, so even
+            // a 'clean' short body (early HTTP/2 stream end) can't pass as a
+            // complete file the way it silently did in v6 and earlier.
+            window.ARCHIVE_SIZES = {"chapter1.unx.part001": 13072876, "chapter2.unx.part001": 31457280, "chapter2.unx.part002": 31457280, "chapter2.unx.part003": 4036502, "chapter3.unx.part001": 31457280, "chapter3.unx.part002": 31457280, "chapter3.unx.part003": 31457280, "chapter3.unx.part004": 31457280, "chapter3.unx.part005": 415474, "chapter4.unx.part001": 31457280, "chapter4.unx.part002": 31457280, "chapter4.unx.part003": 31457280, "chapter4.unx.part004": 31457280, "chapter4.unx.part005": 6062142, "chapter5.unx.part001": 31457280, "chapter5.unx.part002": 31457280, "chapter5.unx.part003": 31457280, "chapter5.unx.part004": 31457280, "chapter5.unx.part005": 31457280, "chapter5.unx.part006": 7999900, "game.unx.part001": 2952322, "runner.wasm": 4634239, "runner0.data": 6735, "runner1.data": 9898173, "runner2.data": 8494111, "runner3.data": 8911569, "runner4.data": 8746369, "runner5.data": 8960321};
                 let archiveTotal = 0;
                 const countedChunks = new Set();
-                async function fetchChunkOnce(chunkUrl) {
+                function expectedSize(url) {
+                    const base = String(url).split('?')[0].split('/').pop();
+                    return (window.ARCHIVE_SIZES && window.ARCHIVE_SIZES[base]) || 0;
+                }
+                async function fetchChunkRaw(url, firstByte, quiet) {
                     const ac = new AbortController();
                     let stallTimer = null;
                     const armStall = () => {
@@ -1671,46 +1691,74 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     };
                     armStall();
                     try {
-                        const response = await originalFetch(chunkUrl + RUNNER_QS, { signal: ac.signal });
-                        if (!response.ok) throw new Error(`HTTP ${response.status} for ${chunkUrl}`);
-                        const lenHeader = +(response.headers.get('Content-Length') || 0);
-                        if (lenHeader && !countedChunks.has(chunkUrl)) {
-                            countedChunks.add(chunkUrl);
-                            archiveTotal += lenHeader;
-                            if (window.DRLoading) DRLoading.setArchiveTotals(archiveTotal);
+                        const headers = firstByte > 0 ? { 'Range': 'bytes=' + firstByte + '-' } : {};
+                        const response = await originalFetch(url, { signal: ac.signal, headers: headers });
+                        if (!response.ok && response.status !== 206) throw new Error('HTTP ' + response.status + ' for ' + url);
+                        let total = -1;
+                        const cr = response.headers.get('Content-Range');
+                        if (cr) { const m = cr.match(/\/(\d+)\s*$/); if (m) total = +m[1]; }
+                        if (total < 0) total = +(response.headers.get('Content-Length') || 0) || -1;
+                        if (!response.body || !window.DRLoading) {
+                            const ab = await response.arrayBuffer();
+                            return { buf: new Uint8Array(ab), total: total, ranged: response.status === 206 };
                         }
-                        if (!response.body || !window.DRLoading) return (await response.arrayBuffer());
-                        // stream the chunk so the SOUL fills up with real progress
                         const reader = response.body.getReader();
                         const parts = [];
+                        let got = 0;
                         for (;;) {
                             const r = await reader.read();
                             if (r.done) break;
                             parts.push(r.value);
-                            DRLoading.addLoaded(r.value.byteLength);
+                            got += r.value.byteLength;
+                            if (!quiet) DRLoading.addLoaded(r.value.byteLength);
                             armStall();
                         }
-                        const size = parts.reduce((s, c) => s + c.byteLength, 0);
-                        if (lenHeader && size !== lenHeader) throw new Error(`chunk truncated (${size} of ${lenHeader} bytes): ${chunkUrl}`);
-                        const out = new Uint8Array(size);
+                        const out = new Uint8Array(got);
                         let p = 0;
                         for (const c of parts) { out.set(c, p); p += c.byteLength; }
-                        return out.buffer;
+                        return { buf: out, total: total, ranged: response.status === 206 };
                     } finally {
                         if (stallTimer) clearTimeout(stallTimer);
                     }
                 }
-                async function fetchChunkRobust(chunkUrl) {
-                    let lastErr = null;
-                    for (let attempt = 1; attempt <= 3; attempt++) {
-                        try { return await fetchChunkOnce(chunkUrl); }
-                        catch (e) {
-                            lastErr = e;
-                            if (window.DRLoading) DRLoading.stage(`RETRYING DOWNLOAD ${attempt}/3`);
-                            await new Promise((r) => setTimeout(r, 800 * attempt));
+                async function fetchChunkRobust(chunkUrl, quiet) {
+                    const expected = expectedSize(chunkUrl);
+                    let total = expected > 0 ? expected : -1, pieces = [], have = 0, failures = 0, requests = 0;
+                    const assemble = () => {
+                        const out = new Uint8Array(have);
+                        let p = 0;
+                        for (const c of pieces) { out.set(c, p); p += c.length; }
+                        return out.buffer;
+                    };
+                    while (requests < 40) {
+                        requests++;
+                        try {
+                            const r = await fetchChunkRaw(chunkUrl + RUNNER_QS + '&r=' + requests, have, quiet);
+                            if (total < 0) total = r.total;
+                            if (expected > 0) total = expected; // repo truth beats any header
+                            if (r.ranged) {
+                                pieces.push(r.buf);
+                                have += r.buf.length;
+                            } else {
+                                pieces = [r.buf];
+                                have = r.buf.length;
+                            }
+                            if (!quiet && total > 0 && !countedChunks.has(chunkUrl)) {
+                                countedChunks.add(chunkUrl);
+                                archiveTotal += total;
+                                DRLoading.setArchiveTotals(archiveTotal);
+                            }
+                            if (total > 0 && have === total) return assemble();
+                            if (total > 0 && have > total) throw new Error('size mismatch for ' + chunkUrl);
+                            if (total < 0) return assemble();
+                        } catch (e) {
+                            failures++;
+                            if (failures >= 6) throw e;
+                            if (!quiet && window.DRLoading) DRLoading.stage('RETRYING DOWNLOAD ' + failures + '/6');
+                            await new Promise((res) => setTimeout(res, 800 * failures));
                         }
                     }
-                    throw lastErr;
+                    throw new Error('too many attempts for ' + chunkUrl);
                 }
                 const archiveParts = await Promise.all(gameArchiveChunks.map((chunkUrl) => fetchChunkRobust(chunkUrl)));
                 if (activeDeltaruneChapter === '0') {
@@ -1742,6 +1790,16 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     }
                     }
 
+                // v7.1: prefetch the engine's own files with the same robust,
+                // resumable downloader; the engine then reads them from blob
+                // URLs. A truncated runner.data / runner.wasm kills the engine
+                // just as silently as a truncated game.unx did.
+                try {
+                    runnerDataBlobUrl = URL.createObjectURL(new Blob([await fetchChunkRobust(runnerDataUrl, true)], { type: 'application/octet-stream' }));
+                } catch (e) { console.error('runner.data prefetch failed; serving it directly:', e); }
+                try {
+                    runnerWasmBlobUrl = URL.createObjectURL(new Blob([await fetchChunkRobust('runner.wasm', true)], { type: 'application/wasm' }));
+                } catch (e) { console.error('runner.wasm prefetch failed; serving it directly:', e); }
                 if (window.DRLoading) DRLoading.stage("LOADING ENGINE");
                 // v7: WebGL pre-check. If the browser blocks WebGL the runner
                 // dies mid-boot (after the overlay already hid), leaving a silent
@@ -1756,6 +1814,9 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 } catch (e) { /* fall through and let the engine try */ }
                 const runnerScript = document.createElement("script");
                 runnerScript.src = runnerScriptUrl + RUNNER_QS;
+                runnerScript.onerror = function () {
+                    if (window.DRLoading) DRLoading.fail("RUNNER SCRIPT FAILED TO LOAD");
+                };
                 document.body.appendChild(runnerScript);
                 console.log("File interception is active. Starting the game...");
                 // v7: engine watchdog. If the engine never logs "Success Loaded
