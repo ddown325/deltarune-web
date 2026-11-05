@@ -19,7 +19,7 @@
  */
 'use strict';
 
-var CACHE_VERSION = 'v9';
+var CACHE_VERSION = 'v9.1';
 var CACHE = 'dr-assets-' + CACHE_VERSION;
 
 var IMMUTABLE = [

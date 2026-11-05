@@ -27,6 +27,12 @@ Pick your mode on the **chapter select screen** itself: the **MODE** selector si
 - `index.html?c=1&hm=off` — pristine chapter data (normal mode, even if HARD is selected)
 - `index.html?c=1&hm=full` — everything (default)
 
+## v9.1 fixes
+
+- **Overworld 2× damage actually works now.** The v9 trampoline had one wrong half-word: the inserted `pop.v.v .hpdiff` carried instance type `0` instead of the original `-1` (self), so the doubled damage was stored on the wrong instance and `self.hpdiff` read back stale — every whole-party overworld hit (the `target == 3` path of `obj_overworldbulletparent`, `obj_teacup_bullet`, `obj_climb_kris`, `obj_climb_susie`, `obj_darkness_bullet`, `obj_overworld_foxbullet` …) did **zero** damage in hard mode. The trampoline now carries the original instruction word verbatim (`0x4555FFFF`); exactly 2 bytes per chapter changed. Single-target overworld hits were never affected (they route through `scr_damage` → `scr_damage_calculation`, which was already doubled).
+- **Chapter 3/4/5 title-screen save-poll storm fixed** — the real cause of the ch5 "DELTARUNE opening" lag. `obj_initializer2`'s Step event re-evaluates *"do save files exist / are chapters completed"* on **every step** (~4 file opens + ini parses per step, ~240 a second, for as long as you sit at the chapter's title/logo screen — ch5's is the DELTARUNE title the opening dumps you on). On Windows that's free; in the HTML5 runner every check crosses the wasm↔JS bridge and throws an FS error for each missing file, which starved the main thread hard enough to freeze the frame loop entirely. The boot-menu re-evaluation now runs once (gated on `global.savedata_async_id`, a console-only variable that is always `-1` on web — the latch uses `-99`, which no async id can collide with). Behavior is unchanged: the menu decision is identical, `room_goto` keeps firing exactly as before.
+- **Smoother chapter intro videos** — the runner feeds video to the game by drawing each frame into a hidden canvas and calling `getImageData` on it every frame; that canvas now opts into `willReadFrequently`, so Chrome keeps it CPU-backed and the per-frame readback stops forcing a GPU→CPU stall. (Applies to the ch3/ch5 intro videos.) `CACHE_VERSION` in `sw.js` was bumped so every client picks up the new runners.
+
 ## What's in this port
 
 - **All five chapters** in the browser, with a Save File Manager (export / import saves as ZIP)
