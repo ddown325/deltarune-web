@@ -15,14 +15,14 @@ Controls: arrows to move, **Z / Enter** to confirm, **X** to cancel.
 
 Pick your mode on the **chapter select screen** itself: the **MODE** selector sits in the bottom-right corner of the menu, level with the game's version line. It's styled exactly like the game's own footer options — the red SOUL marks the option you're on, the active one lights up yellow. Click **NORMAL** / **HARD**, or press **H** to flip it.
 
-- You take **2× damage** from enemy attacks
+- You take **2× damage** from enemy attacks **and field hazards** (cars, bullets, chases, spikes — `scr_damage_all_overworld` is patched too)
 - Enemy/boss attack phases run **1.2× as fast**
 - The choice is saved in `localStorage` and remembered until you swap it
 - The version line in the corner also shows the current mode (`kantasu` / `kantasu [HARD]`), updating live the moment you flip the toggle
 
 **Bisecting a crash** — you can load only one half of the hard mode patches with a URL parameter:
 
-- `index.html?c=1&hm=damage` — only the 2× damage patch
+- `index.html?c=1&hm=damage` — only the 2× damage patches (battle + overworld)
 - `index.html?c=1&hm=speed` — only the 1.2× attack speed patch
 - `index.html?c=1&hm=off` — pristine chapter data (normal mode, even if HARD is selected)
 - `index.html?c=1&hm=full` — everything (default)
@@ -30,6 +30,7 @@ Pick your mode on the **chapter select screen** itself: the **MODE** selector si
 ## What's in this port
 
 - **All five chapters** in the browser, with a Save File Manager (export / import saves as ZIP)
+- **Fast revisits** — a service worker (`sw.js`) keeps the immutable game files (chapter parts, engine files, music, videos) in Cache Storage permanently. GitHub Pages only caches for 10 minutes, which used to force a 60–170 MB re-download every visit before you could even reach save select; now revisits boot from disk in about a second. The engine's own files also download in parallel with the chapter archive, and hard-mode patching happens in place instead of assembling a full file copy (no more 400 ms pause either)
 - **HARD MODE** — see above
 - **SOUL loading screens** — while a chapter downloads you get the chapter title, a pixel SOUL that fills up with real download progress, a live percentage, stage messages (`LOADING DATA` → `APPLYING HARD MODE` → `LOADING ENGINE` → `STARTING GAME`) and a **RETRY** button if the connection drops
 - **Per-chapter tab titles** — the browser tab reads `Chapter 1` … `Chapter 5` while you play
@@ -41,6 +42,7 @@ Pick your mode on the **chapter select screen** itself: the **MODE** selector si
 Hard Mode is implemented as byte-level patches to the GameMaker data files, applied in the browser right before the game boots:
 
 - **damage** — inside `scr_damage`, the `ceil(...)` call that finalises damage taken by the party is replaced by `× 2` (same instruction size, stack-neutral, typed as `mul.i.v` exactly like the compiler emits it). The `ceil` function's reference chain is repaired accordingly (occurrence count −1, the previous link re-pointed past the removed call, per chapter).
+- **owdamage** — the out-of-battle damage pipeline (bullets, cars, chases, spikes — every field hazard) runs through `scr_damage_all_overworld`, which carries its own *inline* copy of the damage math and never calls `scr_damage`, so it needs its own patch. The store that finalises the damage (`hpdiff = tdamage`) is redirected through a 20-byte bytecode trampoline — `pushi.e 2 / mul.i.v / pop.v.v .hpdiff / b-back` — carved into the characters of an unused sprite-name string (sprite names are index-resolved metadata; the sprite itself is untouched). The `hpdiff` variable's occurrence chain is re-linked around the moved store (node count preserved). Verified per chapter: every FUNC/VARI reference chain still walks clean (ch5: 562,812 nodes), the engine loads the fully-patched file and reaches the main loop, and all five chapters boot headless with the complete patch set applied.
 - **speed** — in `obj_battlecontroller`'s Step event, `global.turntimer -= 1` becomes `-= 1.2`, so attack phases count down 1.2× faster. The restructured `&&` short-circuit around it is re-emitted in an equivalent shorter form, and the `turntimer` / `reset` variable reference chains are repaired (deltas re-pointed, per chapter).
 
 Both components are stack-balanced, keep every branch target on an instruction boundary, and leave all FUNC/VARI reference chains walking exactly as in the original data (verified per chapter: only `scr_damage` and `obj_battlecontroller_Step_0` decode differently, and only in the patched region).
