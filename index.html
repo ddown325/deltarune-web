@@ -902,7 +902,7 @@ progress[value]::-webkit-progress-value {
             // (the production-proven battle patch). A correct overworld
             // implementation needs a proper decompiler-driven rewrite, not
             // byte-offset chain surgery.
-            window.OVERWORLD_DMG_PATCHES = {"1":[[2574004,0],[2574005,3],[2574006,0],[2574007,160],[2574212,2],[2574213,0],[2574214,15],[2574215,132],[2574216,0],[2574217,0],[2574218,82],[2574219,8],[2574236,0],[2574237,0],[2574238,15],[2574239,132],[2574240,0],[2574241,0],[2574242,5],[2574243,158],[4110668,247],[4110669,0],[4110670,0],[4110671,0]],"2":[[6429664,48],[6429665,3],[6429666,0],[6429667,160],[6429872,2],[6429873,0],[6429874,15],[6429875,132],[6429876,0],[6429877,0],[6429878,82],[6429879,8],[6429896,0],[6429897,0],[6429898,15],[6429899,132],[6429900,0],[6429901,0],[6429902,5],[6429903,158],[11162288,244],[11162289,2],[11162290,0],[11162291,0]],"3":[[7005800,172],[7005801,3],[7005802,0],[7005803,160],[7006008,2],[7006009,0],[7006010,15],[7006011,132],[7006012,0],[7006013,0],[7006014,82],[7006015,8],[7006032,0],[7006033,0],[7006034,15],[7006035,132],[7006036,0],[7006037,0],[7006038,5],[7006039,158],[13415164,13],[13415165,2],[13415166,0],[13415167,0]],"4":[[17731952,92],[17731953,3],[17731954,0],[17731955,160],[17732160,2],[17732161,0],[17732162,15],[17732163,132],[17732164,0],[17732165,0],[17732166,82],[17732167,8],[17732184,0],[17732185,0],[17732186,15],[17732187,132],[17732188,0],[17732189,0],[17732190,5],[17732191,158],[24767324,38],[24767325,2],[24767326,0],[24767327,0]],"5":[[11853828,128],[11853829,4],[11853830,0],[11853831,160],[11854048,2],[11854049,0],[11854050,15],[11854051,132],[11854052,0],[11854053,0],[11854054,82],[11854055,8],[11854072,0],[11854073,0],[11854074,15],[11854075,132],[11854076,0],[11854077,0],[11854078,5],[11854079,158],[20687792,160],[20687793,2],[20687794,0],[20687795,0]]};
+            window.OVERWORLD_DMG_PATCHES = {};
             // v9.6: ch5 boot-storm latch + same-room goto guard (ALWAYS ON - the
             // crash hit every ch5 player, not just HARD mode). Derived from a full
             // decompile of obj_initializer2 Step_0/Create_0 with the validated
@@ -1678,7 +1678,7 @@ const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audio
             // saves. The save-poll storm itself is harmless (console spam +
             // redundant identical writes); a safe mitigation is documented
             // in the README.
-            console.log('[deltarune-web] v9.6 - overworld 2x damage for the WHOLE party (decompiler-derived, chain-proven), ch5 boot-storm fixed (per-instance latch + same-room goto guard): ch5 now boots to the title and survives (was: tab OOM death ~143s)');
+            console.log('[deltarune-web] v9.7 - HOTFIX: overworld 2x patch PULLED (v9.6 crashed on every out-of-battle hit - 5th failed attempt, never again without runtime damage proof); battle 2x + speed kept; ch5 boot fix kept');
 
 const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
 const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
