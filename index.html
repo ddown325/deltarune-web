@@ -829,55 +829,80 @@ progress[value]::-webkit-progress-value {
             // independent of NORMAL/HARD. Byte offsets are into the
             // assembled chapter5.unx; re-decodes cleanly, chains fixed.
             window.CHAPTER_FIX_PATCHES = {"5":[[12536400,0],[12536402,15],[12536403,132],[12536404,0],[12536406,5],[12536407,158],[12536496,0],[12536498,15],[12536499,132],[12536500,0],[12536501,0],[12536502,5],[12536503,158],[20325426,5],[20325427,158],[20325430,15],[20325431,132],[20325628,0],[20325629,0],[20325630,6],[20325631,192],[20325632,165],[20325635,0],[20325636,0],[20325637,0],[20325638,15],[20325639,132],[20325640,0],[20325642,5],[20325643,158],[20325644,0],[20325645,0],[20325646,15],[20325647,132],[20325648,0],[20325650,5],[20325651,158],[20325652,0],[20325654,15],[20325655,132],[20325656,0],[20325657,0],[20325658,5],[20325659,158],[19916080,4],[19916081,64],[20689192,67],[16003412,216],[20695972,58],[16002768,84],[20696012,40],[20325452,1],[20325454,2],[20325455,217],[20325456,27],[20325457,69],[21566120,1],[21566124,80],[21566125,36],[21566126,54],[21566127,1],[20325464,3],[20325466,2],[20325467,217],[20325468,146],[21623232,92],[21623233,36]]};
-            // v9.4: OVERWORLD 2x DAMAGE (hard mode) - chain-INSERTION
-            // design, fully re-derived from the pristine chapter files with
-            // a ground-truthed model of the GameMaker 2022.2+ reference
-            // encoding (push=0xC0/pop=0x45/call=0xD9, 8 bytes each: word +
-            // 4-byte ref dword; self-scope refs carry top flags 0xA0; the
-            // dword is the byte offset to the NEXT occurrence of the same
-            // variable, and the LAST occurrence of the chain carries the
-            // variable's NAME-STRING-ID instead; the loader walks every
-            // chain from its VARI record [namePtr][instanceType][strIdx]
-            // [occCount][firstOccAddr] for exactly occCount nodes and
-            // RESOLVES every visited node - proven by the battle patch's
-            // working call-chain relink in production since v8.1).
-            //
-            // The store in scr_damage_all_overworld's party loop is
-            //     [push.v.d self.tdamage] [pop.v.v self.hpdiff]
-            // ("hpdiff = tdamage"; hpdiff then feeds the per-member HP
-            // subtraction, the kill-clamp and the damage popup). The patch
-            // (exactly 32 bytes per chapter):
-            //   1. the store's pop word becomes a `b` into 20 bytes of
-            //      scratch, so execution runs pushi.e 2 / mul.i.v /
-            //      pop.v.v self.hpdiff / b-back => hpdiff = tdamage * 2
-            //      for EVERY party member (the whole loop is patched).
-            //   2. the scratch lives in the STRG chunk's zero-padding TAIL
-            //      (29-108 unused zero bytes after the last string) - NOT
-            //      in a sprite-name string like v9/v9.1/v9.3, which
-            //      corrupted live sprite names (spr_face_torielglasses,
-            //      spr_susie_noelle_lift_look_smile_shadow_floor ... all
-            //      referenced from SPRT - the prime suspect for the ch5
-            //      intro crash) and is why damage broke.
-            //   3. the scratch's pop is properly INSERTED into the hpdiff
-            //      occurrence chain: the old terminator's dword becomes a
-            //      forward hop to the scratch, the scratch's pop dword
-            //      carries the terminator name-string-id, and the VARI
-            //      occurrence count is bumped by one. v9/v9.1 relinked
-            //      WITHOUT the count bump (loader walk diverged -> the
-            //      hpdiff reads for members 2/3 stayed unresolved ->
-            //      "2x damage only hits one person"); v9.3 didn't link at
-            //      all (the scratch's ref was never resolved by the
-            //      loader). The count-bump mirrors the battle patch's
-            //      proven occurrence-count surgery in reverse.
-            // Verified per chapter: full simulated loader walk of every
-            // VARI chain on the patched file shows ZERO new failures vs
-            // pristine; the hpdiff chain ends exactly at the scratch's
-            // pop; both branch targets land on instruction boundaries;
-            // the scratch bytes decode as the intended instruction stream;
-            // the STRG tail is pure zero padding with zero inbound
-            // references. Offsets are into the assembled chapterN.unx,
-            // same [offset, byte] convention as the other tables.
-            window.OVERWORLD_DMG_PATCHES = {"1":[[2574320,125],[2574321,89],[2574322,8],[2574323,182],[2574752,80],[2574753,100],[2574754,33],[2574755,160],[4112128,12],[4112129,0],[4112130,0],[4112131,0],[4763108,2],[4763109,0],[4763110,15],[4763111,132],[4763112,0],[4763113,0],[4763114,82],[4763115,8],[4763116,255],[4763117,255],[4763118,85],[4763119,69],[4763120,169],[4763121,7],[4763122,0],[4763123,160],[4763124,129],[4763125,166],[4763126,119],[4763127,182]],"2":[[6429980,38],[6429981,133],[6429982,27],[6429983,182],[6982876,228],[6982877,164],[6982878,101],[6982879,160],[11165088,20],[11165089,0],[11165090,0],[11165091,0],[13644212,2],[13644213,0],[13644214,15],[13644215,132],[13644216,0],[13644217,0],[13644218,82],[13644219,8],[13644220,255],[13644221,255],[13644222,85],[13644223,69],[13644224,79],[13644225,25],[13644226,0],[13644227,160],[13644228,216],[13644229,122],[13644230,100],[13644231,182]],"3":[[7006116,10],[7006117,20],[7006118,37],[7006119,182],[7667916,12],[7667917,55],[7667918,138],[7667919,160],[13441164,36],[13441165,0],[13441166,0],[13441167,0],[16725964,2],[16725965,0],[16725966,15],[16725967,132],[16725968,0],[16725969,0],[16725970,82],[16725971,8],[16725972,255],[16725973,255],[16725974,85],[16725975,69],[16725976,242],[16725977,38],[16725978,0],[16725979,160],[16725980,244],[16725981,235],[16725982,90],[16725983,182]],"4":[[17732268,122],[17732269,6],[17732270,42],[17732271,182],[18433632,64],[18433633,102],[18433634,157],[18433635,160],[24801604,26],[24801605,0],[24801606,0],[24801607,0],[28748948,2],[28748949,0],[28748950,15],[28748951,132],[28748952,0],[28748953,0],[28748954,82],[28748955,8],[28748956,255],[28748957,255],[28748958,85],[28748959,69],[28748960,7],[28748961,39],[28748962,0],[28748963,160],[28748964,132],[28748965,249],[28748966,85],[28748967,182]],"5":[[11854156,223],[11854157,228],[11854158,54],[11854159,182],[12552368,36],[12552369,236],[12552370,208],[12552371,160],[20713872,35],[20713873,0],[20713874,0],[20713875,0],[26244296,2],[26244297,0],[26244298,15],[26244299,132],[26244300,0],[26244301,0],[26244302,82],[26244303,8],[26244304,255],[26244305,255],[26244306,85],[26244307,69],[26244308,228],[26244309,7],[26244310,0],[26244311,160],[26244312,31],[26244313,27],[26244314,73],[26244315,182]]};
+
+            // v9.5: GLSL ES 1.00 SHADER-LOOP FIXES (chapter 5). The ch5
+            // Windows build ships 8 shader families whose GLSL fragment
+            // code uses for-loops with UNIFORM bounds, e.g.
+            //   for (float i = 0.0; i <= blur_radius; i += 1.0)
+            //   for (float i = 0.0; i < paletteHeight; i++)
+            //   for (float i = 0.0; i < sample_count; i += 1.0)
+            //   for (float i = corner.y; i < u_Uvs.w; i += u_pixelSize.y)
+            // WebGL 1 compiles shaders as GLSL ES 1.00, where a loop index
+            // may only be compared against CONSTANT expressions - every one
+            // of these fails with
+            //   "ERROR: 'i' : Loop index cannot be compared with non-constant
+            //    expression"
+            // The logo blur + palette shaders are used by the ch5 INTRO:
+            // with the shaders dead the intro froze/crashed a few seconds
+            // into the X-marks/logo screen (the v9.3/v9.4 "ch5 intro
+            // crash"). The rest (castle reflection, separable + spiral
+            // blur, pixel-scan palette) would crash later areas.
+            // Fix: rewrite each loop with a constant upper bound plus an
+            // inner guard break/continue - the exact idiom ch5's own
+            // MAX_SAMPLES/u_samples and MAX_QUALITY/q shaders already use,
+            // so this is proven-compatible with the runner's compiler
+            // path. Body lines absorbed into the replacement are re-emitted
+            // whitespace-minified and the result padded with spaces: each
+            // replacement is EXACTLY the same byte length as the original
+            // text, so string-table framing, lengths and pointer tables are
+            // untouched. Applied as a content search per downloaded part -
+            // matches wherever the exact broken text occurs (16 sites in
+            // chapter 5: each family's ES + desktop-GL variants), and is a
+            // no-op on chapters 1-4 (verified: they contain none of these
+            // loops). Chapters 1-4 never showed this problem.
+            const SHADER_LOOP_FIXES = [["    for (float i = 0.0; i <= blur_radius; i += 1.0) {\r\n        total_color += texture2D(gm_BaseTexture, v_vTexcoord + vec2(i, 0) * texel);\r\n","    for (float i = 0.0; i < 64.0; i++) {if (blur_radius < i) break;\n\ntotal_color+=texture2D(gm_BaseTexture,v_vTexcoord+vec2(i,0)*texel);    "],["    for (float i = -blur_radius; i <= blur_radius; i += 1.0) {\r\n        total_color += texture2D(gm_BaseTexture, v_vTexcoord + vec2(i, 0) * texel);\r\n","    for (float i = -64.0; i < 64.0; i++) {if (abs(i) > blur_radius) continue;\n\ntotal_color+=texture2D(gm_BaseTexture,v_vTexcoord+vec2(i,0)*texel);   "],["    for (float i = -blur_radius; i <= blur_radius; i += 1.0) {\r\n        total_color += texture2D(gm_BaseTexture, v_vTexcoord + vec2(i * horizontal, i *(1.0-horizontal)) * texel);\r\n","    for (float i = -64.0; i < 64.0; i++) {if (abs(i) > blur_radius) continue;\n\ntotal_color+=texture2D(gm_BaseTexture,v_vTexcoord+vec2(i*horizontal,i*(1.0-horizontal))*texel);      "],["\tfor (float i = 0.0; i < paletteHeight; i++) {\r\n\t\tposA = vec2(0.0/paletteWidth, (i+0.5) / paletteHeight) * range;\r\n\t\tdist = distance(c, c2);\r\n\t\tvec4 c2 = texture2D(iPalette, pos + posA);\r\n\t\tif (abs(c.r - c2.r) < margin && abs(c.g - c2.g) < margin && abs(c.b - c2.b) < margin) {\r\n","\tfor (float i = 0.0; i < 256.0; i++) {if (paletteHeight <= i) break;\n\nposA=vec2(0.0/paletteWidth,(i+0.5)/paletteHeight)*range;\ndist=distance(c,c2);\nvec4 c2=texture2D(iPalette,pos+posA);\nif(abs(c.r-c2.r)<margin&&abs(c.g-c2.g)<margin&&abs(c.b-c2.b)<margin){                        "],["\tfor (float i = 0.0; i < paletteHeight; i++) {\r\n\t\tposA = vec2(0.0/paletteWidth, (i+0.5) / paletteHeight) * range;\r\n\t\tdist = distance(c, c2);\r\n\t\tc2 = texture2D(iPalette, pos + posA);\r\n\t\tif (abs(c.r - c2.r) < margin && abs(c.g - c2.g) < margin && abs(c.b - c2.b) < margin) {\r\n","\tfor (float i = 0.0; i < 256.0; i++) {if (paletteHeight <= i) break;\n\nposA=vec2(0.0/paletteWidth,(i+0.5)/paletteHeight)*range;\ndist=distance(c,c2);\nc2=texture2D(iPalette,pos+posA);\nif(abs(c.r-c2.r)<margin&&abs(c.g-c2.g)<margin&&abs(c.b-c2.b)<margin){                        "],["\tfor (float i = 0.0; i < paletteHeight; i++) {\r\n\t\tposA = vec2(0.0/paletteWidth, (i+0.5) / paletteHeight) * range;\r\n\t\tdist = distance(c.rgb, c2.rgb);\r\n\t\tc2 = texture2D(iPalette, pos + posA);\r\n\t\tif (abs(c.r - c2.r) < margin && abs(c.g - c2.g) < margin && abs(c.b - c2.b) < margin) {\r\n","\tfor (float i = 0.0; i < 256.0; i++) {if (paletteHeight <= i) break;\n\nposA=vec2(0.0/paletteWidth,(i+0.5)/paletteHeight)*range;\ndist=distance(c.rgb,c2.rgb);\nc2=texture2D(iPalette,pos+posA);\nif(abs(c.r-c2.r)<margin&&abs(c.g-c2.g)<margin&&abs(c.b-c2.b)<margin){                        "],["    for (float i = 0.0; i < sample_count; i += 1.0) {\r\n        current_radius += 1.0 / current_radius;\r\n        rotated_coords *= rotation_angle;\r\n","    for (float i = 0.0; i < 128.0; i++) {if (sample_count <= i) break;\n\ncurrent_radius+=1.0/current_radius;\nrotated_coords*=rotation_angle;        "],["    for(float i = corner.y; i < u_Uvs.w; i+=u_pixelSize.y )\r\n    {\r\n\t\t\ttestPos = vec2(corner.x,i);\r\n      leftCol = texture2D( u_palTexture, testPos);\r\n        \r\n\t\t\tdist = distance(leftCol,inCol);\r\n\r\n\t\t\tif(dist < Tolerance)\r\n","    for(float k = 0.0; k < 256.0; k++)\n\n{float i = corner.y + k * u_pixelSize.y; if (u_Uvs.w <= i) break;\ntestPos=vec2(corner.x,i);\nleftCol=texture2D(u_palTexture,testPos);\n\ndist=distance(leftCol,inCol);\n\nif(dist<Tolerance)  "]];
+            function replaceAllBytes(bytes, f, r) {
+                let n = 0;
+                if (f.length !== r.length || !f.length) return 0;
+                const f0 = f[0], f1 = f.length > 1 ? f[1] : -1;
+                const last = bytes.length - f.length;
+                for (let i = 0; i <= last; i++) {
+                    if (bytes[i] !== f0) continue;
+                    if (f1 >= 0 && bytes[i + 1] !== f1) continue;
+                    let ok = true;
+                    for (let j = 2; j < f.length; j++) {
+                        if (bytes[i + j] !== f[j]) { ok = false; break; }
+                    }
+                    if (!ok) continue;
+                    bytes.set(r, i);
+                    n++;
+                    i += f.length - 1;
+                }
+                return n;
+            }
+            function applyShaderLoopFixes(partBuffers) {
+                const enc = new TextEncoder();
+                let applied = 0;
+                for (const buf of partBuffers) {
+                    const bytes = new Uint8Array(buf);
+                    for (const pair of SHADER_LOOP_FIXES) {
+                        applied += replaceAllBytes(bytes, enc.encode(pair[0]), enc.encode(pair[1]));
+                    }
+                }
+                return applied;
+            }
+            // v9.5: OVERWORLD (out-of-battle) 2x damage REMOVED.
+            // The v9/v9.1/v9.3/v9.4 bytecode attempts at doubling
+            // scr_damage_all_overworld's hpdiff store all mis-modeled the
+            // GameMaker 2022.3 variable-occurrence chains: symptoms on the
+            // live site were damage applying to Kris only, inconsistent
+            // amounts, party members getting DOWNED by ordinary hazards
+            // and a hard crash when a downed member was hit again. The
+            // table is now empty: hard mode doubles damage IN BATTLES only
+            // (the production-proven battle patch). A correct overworld
+            // implementation needs a proper decompiler-driven rewrite, not
+            // byte-offset chain surgery.
+            window.OVERWORLD_DMG_PATCHES = {};
             // 2x damage + 1.2x enemy attack speed, applied to the chapter file
             // when it loads. Toggled from the chapter select screen itself:
             // a native obj_ui_choice ("NORMAL"/"HARD") joins the footer row
@@ -1647,7 +1672,7 @@ const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audio
             // saves. The save-poll storm itself is harmless (console spam +
             // redundant identical writes); a safe mitigation is documented
             // in the README.
-            console.log('[deltarune-web] v9.4.1 - reverted the save-storm fix (it ate the chapter-change signal); overworld 2x damage + ch5 intro fixes kept');
+            console.log('[deltarune-web] v9.5 - ch5 intro crash fixed at the root (WebGL1-illegal shader loops rewritten to constant-bound GLSL ES 1.00); overworld 2x-damage patch removed (it corrupted damage state - downing/crashes); battle 2x + speed kept');
 
 const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
 const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
@@ -1805,9 +1830,9 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 return out;
             }
             function HM_LOG_MESSAGE() {
-                if (HM_MODE === 'damage') return 'HARD MODE (?hm=damage): you take 2x damage (battles and overworld).';
+                if (HM_MODE === 'damage') return 'HARD MODE (?hm=damage): you take 2x damage in battles.';
                 if (HM_MODE === 'speed') return 'HARD MODE (?hm=speed): enemy attacks play 1.2x as fast.';
-                return 'HARD MODE active: you take 2x damage everywhere (battles, bullets, cars, chases), enemy attacks play 1.2x as fast. (?hm=damage or ?hm=speed to test one part)';
+                return 'HARD MODE active: you take 2x damage in battles (bullets, attacks), enemy attacks play 1.2x as fast. (?hm=damage or ?hm=speed to test one part)';
             }
 
             
@@ -1944,6 +1969,12 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                 // assembled file, so map each onto its containing part.
                 const partStarts = [];
                 { let acc = 0; for (const p of archiveParts) { partStarts.push(acc); acc += p.byteLength; } }
+                // v9.5: fix WebGL1-illegal shader loops (ch5; see
+                // SHADER_LOOP_FIXES above). Content-addressed same-length
+                // rewrite; no-op on chapters that don't contain the broken
+                // text. Runs BEFORE any other patching.
+                const shaderFixCount = applyShaderLoopFixes(archiveParts);
+                if (shaderFixCount) console.log('SHADER FIX: rewrote ' + shaderFixCount + ' WebGL1-illegal shader loop(s) to constant-bound GLSL ES 1.00.');
                 function patchInPlace(pairs) {
                     for (const [off, val] of pairs) {
                         let lo = 0, hi = partStarts.length - 1;
