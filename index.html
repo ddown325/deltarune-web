@@ -902,7 +902,13 @@ progress[value]::-webkit-progress-value {
             // (the production-proven battle patch). A correct overworld
             // implementation needs a proper decompiler-driven rewrite, not
             // byte-offset chain surgery.
-            window.OVERWORLD_DMG_PATCHES = {};
+            window.OVERWORLD_DMG_PATCHES = {"1":[[2574004,0],[2574005,3],[2574006,0],[2574007,160],[2574212,2],[2574213,0],[2574214,15],[2574215,132],[2574216,0],[2574217,0],[2574218,82],[2574219,8],[2574236,0],[2574237,0],[2574238,15],[2574239,132],[2574240,0],[2574241,0],[2574242,5],[2574243,158],[4110668,247],[4110669,0],[4110670,0],[4110671,0]],"2":[[6429664,48],[6429665,3],[6429666,0],[6429667,160],[6429872,2],[6429873,0],[6429874,15],[6429875,132],[6429876,0],[6429877,0],[6429878,82],[6429879,8],[6429896,0],[6429897,0],[6429898,15],[6429899,132],[6429900,0],[6429901,0],[6429902,5],[6429903,158],[11162288,244],[11162289,2],[11162290,0],[11162291,0]],"3":[[7005800,172],[7005801,3],[7005802,0],[7005803,160],[7006008,2],[7006009,0],[7006010,15],[7006011,132],[7006012,0],[7006013,0],[7006014,82],[7006015,8],[7006032,0],[7006033,0],[7006034,15],[7006035,132],[7006036,0],[7006037,0],[7006038,5],[7006039,158],[13415164,13],[13415165,2],[13415166,0],[13415167,0]],"4":[[17731952,92],[17731953,3],[17731954,0],[17731955,160],[17732160,2],[17732161,0],[17732162,15],[17732163,132],[17732164,0],[17732165,0],[17732166,82],[17732167,8],[17732184,0],[17732185,0],[17732186,15],[17732187,132],[17732188,0],[17732189,0],[17732190,5],[17732191,158],[24767324,38],[24767325,2],[24767326,0],[24767327,0]],"5":[[11853828,128],[11853829,4],[11853830,0],[11853831,160],[11854048,2],[11854049,0],[11854050,15],[11854051,132],[11854052,0],[11854053,0],[11854054,82],[11854055,8],[11854072,0],[11854073,0],[11854074,15],[11854075,132],[11854076,0],[11854077,0],[11854078,5],[11854079,158],[20687792,160],[20687793,2],[20687794,0],[20687795,0]]};
+            // v9.6: ch5 boot-storm latch + same-room goto guard (ALWAYS ON - the
+            // crash hit every ch5 player, not just HARD mode). Derived from a full
+            // decompile of obj_initializer2 Step_0/Create_0 with the validated
+            // VARI/FUNC chain algorithm; whole-file walk simulation + branch checks
+            // PASS; E2E: ch5 boots to the title, renders, 0 errors, 300s+ no crash.
+            window.STORM_PATCHES = {"5":[[19806820,4],[19806821,244],[19806822,4],[19806823,0],[20130380,64],[20130381,0],[20130382,0],[20130383,160],[20130416,0],[20130417,0],[20130418,15],[20130419,132],[20130420,255],[20130421,255],[20130422,37],[20130423,69],[20130424,60],[20130425,4],[20130426,0],[20130427,160],[20130428,1],[20130429,0],[20130430,0],[20130431,182],[20130432,1],[20130433,0],[20130434,0],[20130435,182],[20130436,1],[20130437,0],[20130438,0],[20130439,182],[20131080,255],[20131081,255],[20131082,5],[20131083,192],[20131084,240],[20131085,0],[20131086,0],[20131087,160],[20131088,113],[20131089,0],[20131090,0],[20131091,183],[20131372,159],[20131373,240],[20131374,0],[20131375,160],[20131444,80],[20131445,0],[20131446,0],[20131447,160],[20131476,5],[20131477,0],[20131478,0],[20131479,184],[20131492,1],[20131493,0],[20131494,0],[20131495,184],[20131496,250],[20131497,255],[20131498,5],[20131499,195],[20131500,0],[20131501,0],[20131502,0],[20131503,160],[20131504,255],[20131505,255],[20131506,5],[20131507,192],[20131508,0],[20131509,0],[20131510,0],[20131511,160],[20131512,0],[20131513,1],[20131514,85],[20131515,21],[20131516,6],[20131517,0],[20131518,0],[20131519,183],[20131524,180],[20131525,251],[20131526,255],[20131527,175],[20299824,124],[20299825,110],[20299826,253],[20299827,175],[20690452,161],[20690453,21],[20690454,0],[20690455,0],[20713752,167],[20713753,0],[20713754,0],[20713755,0],[20718012,172],[20718013,1],[20718014,0],[20718015,0],[21523492,3],[21523493,0],[21523494,0],[21523495,0],[21523592,6],[21523593,0],[21523594,0],[21523595,0],[21523596,8],[21523597,45],[21523598,51],[21523599,1]]};
             // 2x damage + 1.2x enemy attack speed, applied to the chapter file
             // when it loads. Toggled from the chapter select screen itself:
             // a native obj_ui_choice ("NORMAL"/"HARD") joins the footer row
@@ -1672,7 +1678,7 @@ const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audio
             // saves. The save-poll storm itself is harmless (console spam +
             // redundant identical writes); a safe mitigation is documented
             // in the README.
-            console.log('[deltarune-web] v9.5 - ch5 intro crash fixed at the root (WebGL1-illegal shader loops rewritten to constant-bound GLSL ES 1.00); overworld 2x-damage patch removed (it corrupted damage state - downing/crashes); battle 2x + speed kept');
+            console.log('[deltarune-web] v9.6 - overworld 2x damage for the WHOLE party (decompiler-derived, chain-proven), ch5 boot-storm fixed (per-instance latch + same-room goto guard): ch5 now boots to the title and survives (was: tab OOM death ~143s)');
 
 const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
 const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
@@ -2010,12 +2016,14 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     // even with ?hm=off - without them ch5 hard-crashes in the
                     // Field of Hopes and Dreams area.
                     const fixBytes = (window.CHAPTER_FIX_PATCHES && window.CHAPTER_FIX_PATCHES[activeDeltaruneChapter]) || [];
-                    const allPatches = fixBytes.concat(alBytes).concat(hmBytes);
+                    const stormBytes = (window.STORM_PATCHES && window.STORM_PATCHES[activeDeltaruneChapter]) || [];
+                    const allPatches = fixBytes.concat(alBytes).concat(hmBytes).concat(stormBytes);
                     if (allPatches.length) {
                         if (window.DRLoading) DRLoading.stage("APPLYING PATCHES");
                         patchInPlace(allPatches);
                         if (hmBytes.length) console.log(HM_LOG_MESSAGE());
                         if (alBytes.length) console.log('ATTACK DURATION: enemy attack patterns last 1.2x longer.');
+                        if (stormBytes.length) console.log('CH5 BOOT FIX: save-storm latch + same-room goto guard applied (' + stormBytes.length + ' bytes).');
                     }
                     gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
                     }
