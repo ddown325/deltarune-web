@@ -904,12 +904,31 @@ progress[value]::-webkit-progress-value {
             // implementation needs a proper decompiler-driven rewrite, not
             // byte-offset chain surgery.
             window.OVERWORLD_DMG_PATCHES = {};
-            // v9.6: ch5 boot-storm latch + same-room goto guard (ALWAYS ON - the
-            // crash hit every ch5 player, not just HARD mode). Derived from a full
-            // decompile of obj_initializer2 Step_0/Create_0 with the validated
-            // VARI/FUNC chain algorithm; whole-file walk simulation + branch checks
-            // PASS; E2E: ch5 boots to the title, renders, 0 errors, 300s+ no crash.
-            window.STORM_PATCHES = {"5":[[19806820,4],[19806821,244],[19806822,4],[19806823,0],[20130380,64],[20130381,0],[20130382,0],[20130383,160],[20130416,0],[20130417,0],[20130418,15],[20130419,132],[20130420,255],[20130421,255],[20130422,37],[20130423,69],[20130424,60],[20130425,4],[20130426,0],[20130427,160],[20130428,1],[20130429,0],[20130430,0],[20130431,182],[20130432,1],[20130433,0],[20130434,0],[20130435,182],[20130436,1],[20130437,0],[20130438,0],[20130439,182],[20131080,255],[20131081,255],[20131082,5],[20131083,192],[20131084,240],[20131085,0],[20131086,0],[20131087,160],[20131088,113],[20131089,0],[20131090,0],[20131091,183],[20131372,159],[20131373,240],[20131374,0],[20131375,160],[20131444,80],[20131445,0],[20131446,0],[20131447,160],[20131476,5],[20131477,0],[20131478,0],[20131479,184],[20131492,1],[20131493,0],[20131494,0],[20131495,184],[20131496,250],[20131497,255],[20131498,5],[20131499,195],[20131500,0],[20131501,0],[20131502,0],[20131503,160],[20131504,255],[20131505,255],[20131506,5],[20131507,192],[20131508,0],[20131509,0],[20131510,0],[20131511,160],[20131512,0],[20131513,1],[20131514,85],[20131515,21],[20131516,6],[20131517,0],[20131518,0],[20131519,183],[20131524,180],[20131525,251],[20131526,255],[20131527,175],[20299824,124],[20299825,110],[20299826,253],[20299827,175],[20690452,161],[20690453,21],[20690454,0],[20690455,0],[20713752,167],[20713753,0],[20713754,0],[20713755,0],[20718012,172],[20718013,1],[20718014,0],[20718015,0],[21523492,3],[21523493,0],[21523494,0],[21523495,0],[21523592,6],[21523593,0],[21523594,0],[21523595,0],[21523596,8],[21523597,45],[21523598,51],[21523599,1]]};
+            // v9.8: the v9.6 STORM_PATCHES table is EMPTY - PULLED.
+            // Runtime proof (headless harness, fresh profile, SW blocked,
+            // current committed table): the engine boots ("Entering main
+            // loop" 5.8s, 17fps) but the canvas stays 100% black forever -
+            // the flow never advances (no logo-music request, no room
+            // transition) while the save-poll storm keeps running at
+            // ~100-220 lines/s (mean ~155) to 107s+. Bytecode postmortem:
+            // the latch was a NO-OP by construction (the inserted bt's
+            // branch-offset bytes were never part of the 116-byte table, so
+            // it fell through and never latched) while the goto-guard
+            // rewrite destroyed the per-step room_goto path (ate the
+            // screen_border_alpha=-1/roomchoice stores, retargeted a bf
+            // backwards) - same failure CLASS as the v9.1 page-side latch:
+            // obj_initializer2_Step_0's per-step block carries BOTH the
+            // save-poll and the room/goto logic and is not separable at the
+            // points we keep choosing, so the game never leaves the
+            // initializer room. With the table empty the same
+            // harness run boots ch5 AND advances: the logo music
+            // (mus/deltarune_logo_ch5_itoki.ogg) is requested and loaded
+            // at ~8.8s - the flow reaches the logo screen. The storm
+            // itself is console spam + redundant identical IDB writes
+            // (harmless on real hardware; only lethal under software
+            // rendering). Never re-ship a latch without this harness
+            // proving the logo-music request actually happens.
+            window.STORM_PATCHES = {};
             // 2x damage + 1.2x enemy attack speed, applied to the chapter file
             // when it loads. Toggled from the chapter select screen itself:
             // a native obj_ui_choice ("NORMAL"/"HARD") joins the footer row
@@ -1679,7 +1698,7 @@ const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audio
             // saves. The save-poll storm itself is harmless (console spam +
             // redundant identical writes); a safe mitigation is documented
             // in the README.
-            console.log('[deltarune-web] v9.7 - HOTFIX: overworld 2x patch PULLED (v9.6 crashed on every out-of-battle hit - 5th failed attempt, never again without runtime damage proof); battle 2x + speed kept; ch5 boot fix kept');
+            console.log('[deltarune-web] v9.8 - ch5 black screen FIXED: the v9.6 storm latch/guard patch is PULLED (it black-screened ch5 on every boot - the engine ran but never left the initializer room, runtime-proven in the headless harness; same failure class as the v9.1 latch). Battle 2x + speed + shader fixes kept; overworld stays vanilla 1x.');
 
 const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
 const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
