@@ -1697,7 +1697,7 @@ const deltaruneChapterExternalFiles = {"0":[],"1":["AUDIO_INTRONOISE.ogg","audio
             // saves. The save-poll storm itself is harmless (console spam +
             // redundant identical writes); a safe mitigation is documented
             // in the README.
-            console.log('[deltarune-web] v9.8 - ch5 black screen FIXED: the v9.6 storm latch/guard patch is PULLED (it black-screened ch5 on every boot - the engine ran but never left the initializer room, runtime-proven in the headless harness; same failure class as the v9.1 latch). Battle 2x + speed + shader fixes kept; overworld stays vanilla 1x.');
+            console.log('[deltarune-web] v9.9 - ch5 INTRO crash fix: all runnerN.js video-canvas code reverted to the first build (the v9.1 willReadFrequently line - the only engine change since the intro last worked). Battle 2x + speed + shader fixes kept; overworld stays vanilla 1x.');
 
 const requestedChapter = new URLSearchParams(window.location.search).get("c") || "0";
 const activeDeltaruneChapter = deltaruneArchives[requestedChapter] ? requestedChapter : "0";
