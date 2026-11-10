@@ -120,9 +120,11 @@ IDB_INJECT_TMPL = """
 
 
 def run(room: int, watch_s: float, tag: str, boot_timeout: float = 210.0,
-        headless: bool = True) -> dict:
+        headless: bool = True, hard: bool = False, hm: str = "full",
+        walk: bool = False, walk_plan: str = None) -> dict:
     room_name = ROOM_NAMES.get(room, f"room_{room}")
-    print(f"[flower_test] room={room} ({room_name}) watch={watch_s}s tag={tag}")
+    print(f"[flower_test] room={room} ({room_name}) watch={watch_s}s tag={tag} "
+          f"hard={hard} hm={hm} walk={walk}")
 
     # ch5 base: none exists in the community repo; the V2 save format is
     # byte-compatible across ch2-5 (3055 lines, 2509 flags), so a real ch4
@@ -143,7 +145,7 @@ def run(room: int, watch_s: float, tag: str, boot_timeout: float = 210.0,
     with sync_playwright() as pw:
         browser, gl_label, gl_args, gl_probe = probe_webgl(pw, headless=headless)
         result["webgl"] = gl_label
-        ctx = make_game_context(browser, hard_mode=None,
+        ctx = make_game_context(browser, hard_mode=(True if hard else None),
                                 extra_init_js=SHADER_PROBE_JS + "\n" + inject)
         page = ctx.new_page()
         tref = [time.time()]
@@ -153,7 +155,7 @@ def run(room: int, watch_s: float, tag: str, boot_timeout: float = 210.0,
                                     ("room_music", "GML_async_wget2_data called for mus/"),
                                     ("dll_fail", "shader_replace_simple DLL failed"),
                                     ("gml_error", "ERROR in")])
-        url = f"{BASE_URL}/index.html?c=5"
+        url = f"{BASE_URL}/index.html?c=5&hm={hm}"
         print(f"[flower_test] goto {url}")
         page.goto(url, timeout=90_000, wait_until="domcontentloaded")
         tref[0] = time.time()
@@ -199,22 +201,50 @@ def run(room: int, watch_s: float, tag: str, boot_timeout: float = 210.0,
         result["timings"]["after_load_s"] = round(time.time() - tref[0], 1)
 
         # --- watch the room: periodic input + change detection ----------------
+        # walk=True: hold each direction ~2s (real walking sweeps through the
+        # field — petals, grass, borders) instead of single key taps.
         t_watch0 = time.time()
         frame_samples = []
         shots = []
         input_cycle = ["z", "ArrowRight", "ArrowDown", "z", "ArrowLeft", "ArrowUp"]
+        walk_cycle = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"]
+        walk_hold_ms = 4000
+        plan = None
+        if walk_plan:
+            DIRK = {"L": "ArrowLeft", "R": "ArrowRight", "U": "ArrowUp", "D": "ArrowDown", "Z": "Z"}
+            plan = [(DIRK[p[0]], float(p[1:])) for p in walk_plan.split(",") if p]
         i_in = 0
         last = [time.time()]
         while time.time() - t_watch0 < watch_s:
             if blog.crashed:
                 break
-            page.wait_for_timeout(2500)
-            k = input_cycle[i_in % len(input_cycle)]
-            page.keyboard.press(k)
+            if plan:
+                k, hold = plan[i_in % len(plan)]
+                if k == "Z":   # Z-rhythm phase: press Z every ~800ms for `hold` seconds
+                    t_end = time.time() + min(hold, max(0.1, watch_s - (time.time() - t_watch0)))
+                    while time.time() < t_end and not blog.crashed:
+                        page.keyboard.press("z")
+                        page.wait_for_timeout(800)
+                else:
+                    page.keyboard.down(k)
+                    page.wait_for_timeout(min(hold, max(0.1, watch_s - (time.time() - t_watch0))) * 1000)
+                    page.keyboard.up(k)
+                    page.wait_for_timeout(300)
+            elif walk:
+                k = walk_cycle[i_in % len(walk_cycle)]
+                page.keyboard.down(k)
+                page.wait_for_timeout(walk_hold_ms)
+                page.keyboard.up(k)
+                if i_in % 4 == 3:          # occasional interact while circling
+                    page.keyboard.press("z")
+            else:
+                page.wait_for_timeout(2500)
+                k = input_cycle[i_in % len(input_cycle)]
+                page.keyboard.press(k)
             i_in += 1
             frame_samples.append({"t": round(time.time() - tref[0], 1),
                                   "frames": frames_now(page)})
-            if time.time() - last[0] >= 15:
+            if time.time() - last[0] >= 8:
                 p = shot_dir / f"flower_{tag}_w{int(time.time()-t_watch0):03d}s.png"
                 page.screenshot(path=str(p))
                 shots.append(analyze_png(p))
@@ -294,8 +324,17 @@ def main() -> int:
     ap.add_argument("--watch", type=float, default=100.0)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--headed", action="store_true")
+    ap.add_argument("--hard", action="store_true",
+                    help="hard mode ON (localStorage set before page scripts)")
+    ap.add_argument("--hm", default="full", choices=["full", "damage", "speed", "off"],
+                    help="hard-mode patch component (?hm= URL param)")
+    ap.add_argument("--walk", action="store_true",
+                    help="hold-key walking sweeps instead of key taps")
+    ap.add_argument("--walk-plan", default=None,
+                    help="directional hold plan, e.g. 'L20,R20,U10,D10' (overrides --walk cycle)")
     a = ap.parse_args()
-    res = run(a.room, a.watch, a.tag, headless=not a.headed)
+    res = run(a.room, a.watch, a.tag, headless=not a.headed,
+              hard=a.hard, hm=a.hm, walk=a.walk, walk_plan=a.walk_plan)
     return 0 if res.get("verdict") in ("ALIVE",) else 1
 
 

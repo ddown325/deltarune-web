@@ -218,12 +218,12 @@ def diff_pngs(a: Path, b: Path) -> float | None:
 # --------------------------------------------------------------------------- #
 # WebGL launch-arg probe
 # --------------------------------------------------------------------------- #
-def probe_webgl(pw, headless: bool = True):
+def probe_webgl(pw, headless: bool = True, stderr=None, extra_args=None):
     """Try candidates until about:blank can create a WebGL context.
     Returns (browser, label, full_args, probe_result_dict) — browser stays open."""
     last_err = None
     for label, extra in WEBGL_ARG_CANDIDATES:
-        args = BASE_ARGS + extra
+        args = BASE_ARGS + extra + (extra_args or [])
         browser = None
         try:
             browser = pw.chromium.launch(headless=headless, args=args)
