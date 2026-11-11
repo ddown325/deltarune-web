@@ -51,7 +51,11 @@ except ImportError:  # pragma: no cover
 E2E_DIR = Path(__file__).resolve().parent
 LOG_DIR = E2E_DIR / "logs"
 SHOT_DIR = E2E_DIR / "shots"
-DRWEB_DIR = E2E_DIR.parent / "drweb"          # READ-ONLY repo, served as-is
+# READ-ONLY repo, served as-is. Original layout: tests/ sits NEXT to a
+# "drweb" checkout. Since the tests also ship inside the repo itself
+# (tests/ inside the served repo), fall back to the enclosing directory.
+_DRWEB_CANDIDATE = E2E_DIR.parent / "drweb"
+DRWEB_DIR = _DRWEB_CANDIDATE if _DRWEB_CANDIDATE.is_dir() else E2E_DIR.parent
 BASE_URL = "http://127.0.0.1:8901"
 PORT = 8901
 
