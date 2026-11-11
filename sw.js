@@ -16,10 +16,33 @@
  *
  * When a deploy changes any cached file, bump CACHE_VERSION: clients purge
  * the old cache on the next visit and re-download the changed set.
+ *
+ * v9.13 - the poisoned-entry fixes ("fails to load, RETRYING DOWNLOAD 5/6"
+ * on some devices, only fixable by deleting ALL site data - saves included):
+ *
+ * 1. Only COMPLETE bodies are cached. The v9 worker cached whatever the CDN
+ *    handed it: when GitHub Pages/Fastly closed a big download early (the
+ *    same "clean but short" body the page downloader has defended against
+ *    since v7.1), the truncated copy was stored PERMANENTLY under the
+ *    immutable key. Every later load served that truncated copy, the page's
+ *    Range resume then asked for bytes past the end (416), all six retry
+ *    rounds hit the same poisoned entry, and the game died at
+ *    "RETRYING DOWNLOAD 5/6 -> DOWNLOAD FAILED" forever. Now a fetched body
+ *    is buffered and compared against its own Content-Length before it is
+ *    allowed into the cache.
+ * 2. Self-heal: if a Range request asks for a start byte at/after the end of
+ *    a cached body (only possible for a poisoned entry - the page ranges
+ *    inside the known file size), the entry is deleted and re-fetched from
+ *    the network, verified and re-cached.
+ * 3. Storage-blocked fallback: on devices where Cache Storage is unavailable
+ *    or throws (Safari private mode, storage-policy-locked browsers, quota
+ *    edge states) the old worker REJECTED, which killed every request it
+ *    handled - the game could not load at all even though plain network
+ *    worked. All caches access is now guarded and falls back to plain fetch.
  */
 'use strict';
 
-var CACHE_VERSION = 'v9.12';
+var CACHE_VERSION = 'v9.13';
 var CACHE = 'dr-assets-' + CACHE_VERSION;
 
 var IMMUTABLE = [
@@ -44,14 +67,14 @@ self.addEventListener('install', function (event) {
 });
 
 self.addEventListener('activate', function (event) {
-    event.waitUntil((function () {
-        return caches.keys().then(function (keys) {
-            return Promise.all(keys.map(function (k) {
+    event.waitUntil((async function () {
+        try {
+            var keys = await caches.keys();
+            await Promise.all(keys.map(function (k) {
                 if (k !== CACHE) return caches.delete(k);
             }));
-        }).then(function () {
-            return self.clients.claim();
-        });
+        } catch (e) { /* storage blocked: keep serving without a cache */ }
+        try { return await self.clients.claim(); } catch (e) {}
     })());
 });
 
@@ -89,47 +112,97 @@ function slice206(buffer, request, contentType) {
     });
 }
 
+// Fetch the FULL resource (never a partial 206 body) from the network,
+// verify its completeness against its own Content-Length header, and only
+// then store it. Returns the verified response (plus its buffer so Range
+// requests can be sliced without a second read).
+async function fetchCompleteAndCache(key, cache) {
+    var response = await fetch(key, { credentials: 'same-origin' });
+    if (!response.ok) {
+        return { response: response, buffer: null };
+    }
+    var expected = parseInt(response.headers.get('content-length') || '0', 10);
+    var buffer = await response.arrayBuffer();
+    var complete = expected > 0 ? buffer.byteLength === expected : true;
+    if (complete && cache) {
+        try {
+            await cache.put(key, new Response(buffer, {
+                status: 200,
+                statusText: 'OK',
+                headers: new Headers(response.headers)
+            }));
+        } catch (e) {
+            /* quota exceeded or cache error: keep going without caching */
+        }
+    }
+    return {
+        response: new Response(buffer, {
+            status: response.status,
+            headers: new Headers(response.headers)
+        }),
+        buffer: buffer
+    };
+}
+
 async function cacheFirst(event) {
     var request = event.request;
     var key = cacheKeyFor(request);
-    var cache = await caches.open(CACHE);
-    var cached = await cache.match(key);
-    if (cached) {
-        if (request.headers.has('range')) {
+    var cache = null;
+    try { cache = await caches.open(CACHE); } catch (e) { cache = null; }
+    if (cache) {
+        var cached = null;
+        try { cached = await cache.match(key); } catch (e) { cached = null; }
+        if (cached) {
+            if (!request.headers.has('range')) return cached;
             var buf = await cached.arrayBuffer();
-            return slice206(buf, request, cached.headers.get('content-type'));
+            var m = request.headers.get('range').match(/bytes=(\d+)-/);
+            var start = m ? parseInt(m[1], 10) : 0;
+            if (start < buf.byteLength) {
+                return slice206(buf, request, cached.headers.get('content-type'));
+            }
+            // v9.13 self-heal: the downloader only ranges inside the known
+            // file size, so a start at/after the cached body's end means the
+            // entry is truncated (v9-era poison). Drop it; the network path
+            // below re-fetches, verifies and re-caches a complete copy.
+            try { await cache.delete(key); } catch (e) {}
         }
-        return cached;
     }
-    // fetch the FULL resource (never cache a partial 206 body)
-    var response = await fetch(key, { credentials: 'same-origin' });
-    if (!response.ok) return response;
-    var clone = response.clone();
+    var r;
     try {
-        await cache.put(key, clone);
+        r = await fetchCompleteAndCache(key, cache);
     } catch (e) {
-        /* quota exceeded or cache error: keep going without caching */
+        // network error (offline, aborted): nothing new cached; the page's
+        // retry/resume logic handles it
+        throw e;
     }
     if (request.headers.has('range')) {
-        var buf2 = await response.arrayBuffer();
-        return slice206(buf2, request, response.headers.get('content-type'));
+        if (r.buffer) {
+            var m2 = request.headers.get('range').match(/bytes=(\d+)-/);
+            var start2 = m2 ? parseInt(m2[1], 10) : 0;
+            return slice206(r.buffer, request, r.response.headers.get('content-type'));
+        }
+        return r.response; // non-ok status: pass through, the caller retries
     }
-    return response;
+    return r.response;
 }
 
 async function networkFirst(event) {
     var request = event.request;
-    var key = cacheKeyFor(request);
-    var cache = await caches.open(CACHE);
     try {
         var fresh = await fetch(request, { credentials: 'same-origin' });
         if (fresh.ok) {
-            try { await cache.put(key, fresh.clone()); } catch (e) {}
+            try {
+                var cache = await caches.open(CACHE);
+                await cache.put(cacheKeyFor(request), fresh.clone());
+            } catch (e) {}
         }
         return fresh;
     } catch (e) {
-        var cached = await cache.match(key);
-        if (cached) return cached;
+        try {
+            var cache2 = await caches.open(CACHE);
+            var cached = await cache2.match(cacheKeyFor(request));
+            if (cached) return cached;
+        } catch (e2) { /* storage blocked: rethrow the network error */ }
         throw e;
     }
 }

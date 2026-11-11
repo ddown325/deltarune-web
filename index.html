@@ -583,6 +583,19 @@ progress[value]::-webkit-progress-value {
                 padding: 12px 34px; cursor: pointer;
             }
             #drRetry:hover, #drRetry:focus-visible { background: #ff9c00; color: #000; }
+            /* v9.13: save-safe recovery for the download-failure wedge */
+            #drReset {
+                display: block;
+                margin: 14px auto 0;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 8px; color: #7fd0ff;
+                background: #000;
+                border: 2px solid #7fd0ff;
+                padding: 10px 18px; cursor: pointer;
+                letter-spacing: 0.08em;
+            }
+            #drReset:hover, #drReset:focus-visible { background: #7fd0ff; color: #000; }
+            #drReset[disabled] { opacity: 0.6; cursor: wait; }
             #loading-overlay.done #drHeartFill { animation: drflash 0.32s steps(2, jump-none) 1; }
             @keyframes drflash { 0% { fill: #fff; } 100% { fill: #ff0000; } }
             .dr-bottom {
@@ -667,6 +680,7 @@ progress[value]::-webkit-progress-value {
             <div id="drStage">LOADING</div>
             <div id="drHard" hidden>HARD MODE</div>
             <button id="drRetry" type="button" hidden>RETRY</button>
+            <button id="drReset" type="button" hidden>RESET GAME FILES (KEEPS SAVES)</button>
         </div>
         <div class="dr-bottom">
             <span>kantasu</span>
@@ -768,6 +782,8 @@ progress[value]::-webkit-progress-value {
                         if (el) { el.textContent = msg; el.classList.add('err'); }
                         const r = dr$('drRetry');
                         if (r) r.hidden = false;
+                        const x = dr$('drReset');
+                        if (x) x.hidden = false;
                     },
                     hide: function () {
                         if (!this.visible) return;
@@ -779,6 +795,56 @@ progress[value]::-webkit-progress-value {
 
                 const retryBtn = dr$('drRetry');
                 if (retryBtn) retryBtn.addEventListener('click', function () { location.reload(); });
+
+                // v9.13: the poisoned-asset-cache recovery paths. The "fails
+                // to load, RETRYING DOWNLOAD 5/6 -> DOWNLOAD FAILED" wedge was
+                // caused by truncated bodies the v9 worker cached forever
+                // (see sw.js); a plain RETRY (reload) just hit the same poison
+                // again, and the only escape players had was deleting ALL site
+                // data - which also deleted their saves for nothing. These run
+                // entirely inside Cache Storage and never touch IndexedDB,
+                // where the saves live (/_savedata).
+                window.DRClearAssetCache = function () {
+                    return (async function () {
+                        try {
+                            if (window.caches && caches.keys) {
+                                const keys = await caches.keys();
+                                await Promise.all(keys
+                                    .filter((k) => /^dr-assets-/.test(k))
+                                    .map((k) => caches.delete(k)));
+                            }
+                        } catch (e) { /* no cache storage: nothing to clear */ }
+                        try {
+                            if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+                                const reg = await navigator.serviceWorker.getRegistration();
+                                if (reg && reg.update) { try { await reg.update(); } catch (e) {} }
+                            }
+                        } catch (e) {}
+                    })().then(function () {}, function () {});
+                };
+                // drop ONE poisoned entry (used by the XHR wrapper when it
+                // catches a short body, so its retry can't hit the same copy)
+                window.DRPurgeCachedAsset = function (url) {
+                    try {
+                        if (!window.caches || !caches.keys) return;
+                        const u = new URL(String(url), location.href);
+                        if (u.origin !== location.origin) return;
+                        const key = u.origin + u.pathname; // same keying as sw.js
+                        caches.keys().then(function (keys) {
+                            return Promise.all(keys
+                                .filter((k) => /^dr-assets-/.test(k))
+                                .map((k) => caches.open(k)
+                                    .then((c) => c.delete(key))
+                                    .catch(function () {})));
+                        }).catch(function () {});
+                    } catch (e) {}
+                };
+                const resetBtn = dr$('drReset');
+                if (resetBtn) resetBtn.addEventListener('click', function () {
+                    resetBtn.disabled = true;
+                    resetBtn.textContent = 'CLEARING...';
+                    window.DRClearAssetCache().then(function () { location.reload(); });
+                });
             })();
 
             // v6: the bytecode-level chapter-select patch was reverted -- spawning the
@@ -1222,7 +1288,8 @@ progress[value]::-webkit-progress-value {
             <div class="save-manager-content2">
                 <span class="minimize-button" onclick="window.DeltaruneSaveManager.closeSMnoreload()">&dash;</span>
                 <h2>Save File Manager!</h2>
-                <button class="output-button" onclick="toggleclear_site_cache()">Wipe all of your saves?</button>
+                <button class="output-button" onclick="toggleclear_asset_cache()">Reset game files? (keeps saves)</button>
+                <button class="output-button" onclick="factory_reset_all_data()">Factory reset? (DELETES saves)</button>
                 <button id="exportAllBtn" class="output-button" onclick="DeltaruneSaveManager.exportAllToZip()">Export all saves to ZIP?</button>
                                 <h3>Current Save Files:</h3>
                 <div id="saveFileList" class="save-file-list">
@@ -1526,20 +1593,34 @@ progress[value]::-webkit-progress-value {
                     outputElement.scrollIntoView(true);
                 }
             }
-            async function toggleclear_site_cache() {
-                
-                const confirmed = await window.DeltaruneSaveManager.confirmBox("This will clear the site cache. Most importantly, this will ALSO clear ALL OF YOUR SAVES. ONLY do this if you know what you are doing or if the site/game crashes repeatedly. Still wanna continue?");
+            async function toggleclear_asset_cache() {
+                // v9.13: the save-safe repair. Clears ONLY the cached game
+                // files (Cache Storage) and re-downloads them on next load;
+                // saves (IndexedDB /_savedata) are untouched.
+                const confirmed = await window.DeltaruneSaveManager.confirmBox("This clears the cached game files - they re-download on the next load. Your SAVES ARE KEPT. Continue?");
+                if (confirmed) {
+                    await window.DRClearAssetCache();
+                    window.DeltaruneSaveManager.showMessageBox("Cached game files cleared!\nYour saves are untouched. Reloading the page...");
+                    setTimeout(() => location.reload(), 1200);
+                }
+            }
+            async function factory_reset_all_data() {
+                // v9.13: the old save-wiping button, now clearly labeled, and
+                // it also purges the asset cache (the old version deleted the
+                // saves but NOT the broken cache that was causing the load
+                // failures in the first place).
+                const confirmed = await window.DeltaruneSaveManager.confirmBox("FACTORY RESET: this deletes ALL OF YOUR SAVES and the cached game files. This cannot be undone. ONLY do this if the game still fails to load after a game-files reset. Continue?");
                 if (confirmed) {
                     try {
                         const dbs = await window.indexedDB.databases();
                         dbs.forEach(db => {
                             window.indexedDB.deleteDatabase(db.name)
                         });
-                        window.DeltaruneSaveManager.showMessageBox("All site data has been cleared!\nPlease reload the page for it to take effect.");
                     } catch (error) {
                         console.error("Error clearing IndexedDB:", error);
-                        window.DeltaruneSaveManager.showMessageBox("Failed to clear site data. Error: " + error.message);
                     }
+                    await window.DRClearAssetCache();
+                    window.DeltaruneSaveManager.showMessageBox("All site data has been cleared!\nPlease reload the page for it to take effect.");
                 }
             }
             
@@ -1873,6 +1954,12 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             // set, the engine is served these blob URLs instead of the network
             let runnerDataBlobUrl = null;
             let runnerWasmBlobUrl = null;
+            // v9.13: the engine script too. It used to be a plain <script
+            // src> with a single unverified GET: a truncated copy cached by
+            // the old worker meant a permanent boot failure with no retry
+            // path. Blob-URL script loads are explicitly supported by the
+            // runner glue (it checks currentScript.src for a blob: prefix).
+            let runnerScriptBlobUrl = null;
 
             // --- Interception Logic ---
             // Intercept 'fetch' requests
@@ -1948,6 +2035,12 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                             } catch (e) {}
                         }
                         if ((ok && lenOK) || attempt >= 5) { if (userLoad) userLoad.call(xhr, ev); return; }
+                        // v9.13: a short body usually means a poisoned cache
+                        // entry (the old worker cached truncated copies);
+                        // drop it so the retry below can't hit the same one
+                        if (!lenOK) {
+                            try { if (typeof window.DRPurgeCachedAsset === 'function') window.DRPurgeCachedAsset(url); } catch (e) {}
+                        }
                         retryOrFail(ev);
                     };
                     xhr.onerror = function (ev) { retryOrFail(ev); };
@@ -2005,7 +2098,10 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
             // the repo) - the downloader resumes/verifies against THESE, so even
             // a 'clean' short body (early HTTP/2 stream end) can't pass as a
             // complete file the way it silently did in v6 and earlier.
-            window.ARCHIVE_SIZES = {"chapter1.unx.part001": 13072876, "chapter2.unx.part001": 31457280, "chapter2.unx.part002": 31457280, "chapter2.unx.part003": 4036502, "chapter3.unx.part001": 31457280, "chapter3.unx.part002": 31457280, "chapter3.unx.part003": 31457280, "chapter3.unx.part004": 31457280, "chapter3.unx.part005": 415474, "chapter4.unx.part001": 31457280, "chapter4.unx.part002": 31457280, "chapter4.unx.part003": 31457280, "chapter4.unx.part004": 31457280, "chapter4.unx.part005": 6062142, "chapter5.unx.part001": 31457280, "chapter5.unx.part002": 31457280, "chapter5.unx.part003": 31457280, "chapter5.unx.part004": 31457280, "chapter5.unx.part005": 31457280, "chapter5.unx.part006": 7999900, "game.unx.part001": 2952322, "runner.wasm": 4634239, "runner0.data": 6735, "runner1.data": 9898173, "runner2.data": 8494111, "runner3.data": 8911569, "runner4.data": 8746369, "runner5.data": 8960321};
+            window.ARCHIVE_SIZES = {"chapter1.unx.part001": 13072876, "chapter2.unx.part001": 31457280, "chapter2.unx.part002": 31457280, "chapter2.unx.part003": 4036502, "chapter3.unx.part001": 31457280, "chapter3.unx.part002": 31457280, "chapter3.unx.part003": 31457280, "chapter3.unx.part004": 31457280, "chapter3.unx.part005": 415474, "chapter4.unx.part001": 31457280, "chapter4.unx.part002": 31457280, "chapter4.unx.part003": 31457280, "chapter4.unx.part004": 31457280, "chapter4.unx.part005": 6062142, "chapter5.unx.part001": 31457280, "chapter5.unx.part002": 31457280, "chapter5.unx.part003": 31457280, "chapter5.unx.part004": 31457280, "chapter5.unx.part005": 31457280, "chapter5.unx.part006": 7999900, "game.unx.part001": 2952322, "runner.wasm": 4634239, "runner0.data": 6735, "runner1.data": 9898173, "runner2.data": 8494111, "runner3.data": 8911569, "runner4.data": 8746369, "runner5.data": 8960321, "runner0.js": 157078, "runner1.js": 157359, "runner2.js": 157278, "runner3.js": 157278, "runner4.js": 157278, "runner5.js": 157278};
+                // v9.13: runnerN.js sizes joined the table - the engine
+                // script is now prefetched through fetchChunkRobust (see
+                // runnerScriptReady), so it gets exact-size verification too.
                 let archiveTotal = 0;
                 const countedChunks = new Set();
                 function expectedSize(url) {
@@ -2105,6 +2201,13 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                         runnerWasmBlobUrl = URL.createObjectURL(new Blob([await fetchChunkRobust('runner.wasm', true)], { type: 'application/wasm' }));
                     } catch (e) { console.error('runner.wasm prefetch failed; serving it directly:', e); }
                 })();
+                // v9.13: same robust path for the engine script (resume +
+                // exact-size verification + retries; see comment above).
+                const runnerScriptReady = (async () => {
+                    try {
+                        runnerScriptBlobUrl = URL.createObjectURL(new Blob([await fetchChunkRobust(runnerScriptUrl, true)], { type: 'text/javascript' }));
+                    } catch (e) { console.error('runner script prefetch failed; serving it directly:', e); }
+                })();
 
                 const archiveParts = await Promise.all(gameArchiveChunks.map((chunkUrl) => fetchChunkRobust(chunkUrl)));
                 // v9: patches are applied IN PLACE, straight into the already-
@@ -2173,7 +2276,7 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     gameUnxUrl = URL.createObjectURL(new Blob(archiveParts, { type: 'application/octet-stream' }));
                     }
 
-                await Promise.all([runnerDataReady, runnerWasmReady]);
+                await Promise.all([runnerDataReady, runnerWasmReady, runnerScriptReady]);
                 if (window.DRLoading) DRLoading.stage("LOADING ENGINE");
                 // v7: WebGL pre-check. If the browser blocks WebGL the runner
                 // dies mid-boot (after the overlay already hid), leaving a silent
@@ -2187,8 +2290,15 @@ if (!deltaruneArchives[requestedChapter]) console.warn("Unknown Deltarune chapte
                     }
                 } catch (e) { /* fall through and let the engine try */ }
                 const runnerScript = document.createElement("script");
-                runnerScript.src = runnerScriptUrl + RUNNER_QS;
+                runnerScript.src = runnerScriptBlobUrl || (runnerScriptUrl + RUNNER_QS);
                 runnerScript.onerror = function () {
+                    // one cache-busted retry before giving up (v9.13; the blob
+                    // path normally makes this unreachable)
+                    if (!runnerScript.dataset.rr) {
+                        runnerScript.dataset.rr = '1';
+                        runnerScript.src = runnerScriptUrl + RUNNER_QS + '&rr=1';
+                        return;
+                    }
                     if (window.DRLoading) DRLoading.fail("RUNNER SCRIPT FAILED TO LOAD");
                 };
                 document.body.appendChild(runnerScript);
